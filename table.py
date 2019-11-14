@@ -2,52 +2,90 @@ from card import *
 from collections import OrderedDict as ordereddict
 
 class Table:
-    def __init__(self):
+    def __init__(self, num_players):
         """
-        A table is a collection of card piles
+        A table is a collection of card piles.
         """
 
-        # NOTE: for 3-4 players, 12 each of victory cards
-        # 10 Kingdom cards
-        # 10 curse cards for each player beyond the first
+        # Use a ordered dict to allow indexing with a number
         self.table = ordereddict({
-            COPPER: 60 - (2 * 7),
+            COPPER: 60 - (num_players * 7),
             SILVER: 40,
             GOLD: 30,
-            ESTATE: 8,
-            DUTCHY: 8,
-            PROVINCE: 8,
-            CURSE: 10 * (2 - 1),
-            # Kingdom (10)
+            ESTATE: 8 if num_players == 2 else 12,
+            DUTCHY: 8 if num_players == 2 else 12,
+            PROVINCE: 8 if num_players == 2 else 12,
+            CURSE: 10 * (num_players - 1),
+            # Kingdom (10 selected at random)
             CHAPEL: 10,
             SMITHY: 10,
             VILLAGE: 10,
             FESTIVAL: 10,
             COUNCIL_ROOM: 10,
+            MARKET: 10,
+            LABORATORY: 10,
+            WITCH: 10,
+            GARDENS: 10,
+            MINE: 10,
         })
 
 
     def __str__(self):
+        """
+        Returns a string representation of the table.
+        """
         s = '{:<4}{:<20}{:<6}{:<5}\n'.format('', 'Name', 'Left', 'Cost')
         for i, (card, left) in enumerate(self.table.items()):
             s += '{:>2}. {!s:<28} [{:>2}] {:>5} | {}\n'.format(i, card, left, card.cost, card.description)
         return s
 
 
-    def can_purchase(self, idx, treasures):
+    def can_purchase(self, idx, treasures, card_type_only=None):
         """
         A card is available for purcase if there is more in the pile, and the
         cost is at most the amount of treasures available.
         """
         card, left = list(self.table.items())[idx]
-        return card.cost <= treasures and left > 1
+        if card_type_only and card.type != card_type_only:
+            return False
+
+        return card.cost <= treasures and left >= 1
 
 
-    def buy(self, idx):
+    def buy_idx(self, idx):
+        """
+        When passed an index of a card, perform a purchase of the card, removing
+        one count of it from the table and returning a shared instance of it to
+        the player.
+        """
         card, _ = list(self.table.items())[idx]
         self.table[card] -= 1
         return card
 
 
+    def get_card(self, card):
+        """
+        If a specific card is desired, just pull one of it from the table. If there
+        are no cards left in the pile, returns False.
+        """
+        if self.table[card] >= 1:
+            self.table[card] -= 1
+            return True
+        return False
+        
+
+
     def reached_end(self):
+        """
+        Returns true if the end of the game is reached. This can happen when:
+        - There are no more provinces
+        - 3 piles are empty (4 in a four player game)
+        """
+        if self.table[PROVINCE] == 0:
+            return True
+
+        n_piles_empty = len([v for v in self.table.values() if v == 0])
+        if n_piles_empty >= 3:
+            return True
+
         return False

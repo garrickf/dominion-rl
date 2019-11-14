@@ -1,14 +1,8 @@
 from deck import Deck
-from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES
+from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE
+from util import get_integer
 
 NUM_TO_DRAW = 7
-
-def get_integer(prompt):
-    typed = input(prompt)
-    if typed.isdigit():
-        return int(typed)
-    elif typed == '':
-        return None
 
 class Player:
     def __init__(self, i):
@@ -61,7 +55,7 @@ class Player:
         return total
 
 
-    def action_phase(self):
+    def action_phase(self, table):
         """
         During the action phase, a player can play any action card from their
         hand.
@@ -91,7 +85,7 @@ class Player:
 
             card = self.hand.pop(action)
             self.deck.discard([card]) # Place into discard
-            card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE)
+            card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
             
             if card.action.affects_others:
                 action_cache.append(card.action)
@@ -119,7 +113,7 @@ class Player:
                 break
             
             while not table.can_purchase(choice, pp):
-                print('Too expensive, try again!')
+                print('Can\'t buy that, try again!')
                 print('Make a purchase or ENTER to skip')
                 choice = get_integer("? ")
                 if choice == None:
@@ -127,7 +121,7 @@ class Player:
                     return
 
             # Buy card and update pp
-            card = table.buy(choice)
+            card = table.buy_idx(choice)
             pp -= card.cost
             self.num_buys -= 1
             self.deck.add_new(card)
@@ -137,7 +131,6 @@ class Player:
         self.num_buys = 1
 
 
-    # TODO: could just represent the hand as an array
     def cleanup_hand(self):
         self.deck.discard(self.hand)
 
@@ -148,4 +141,12 @@ class Player:
 
 
     def compute_score(self):
-        return 0
+        """
+        Using the deck's card counts, calculate the number of victory points
+        the player has.
+        """
+        return self.deck.counts[ESTATE] * 1 \
+            + self.deck.counts[DUTCHY] * 3 \
+            + self.deck.counts[PROVINCE] * 6 \
+            + self.deck.counts[CURSE] * -1
+        # TODO: include garden

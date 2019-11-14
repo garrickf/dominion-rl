@@ -11,7 +11,7 @@ class Dominion:
         # Create a game instance with two players
         self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
         self.turn = 0
-        self.table = Table()
+        self.table = Table(NUM_PLAYERS)
         # TODO: handle computer instance (with a computer class? computer controls player?)
 
 
@@ -25,12 +25,12 @@ class Dominion:
 
             # Action phase
             player.display_state()
-            action_cache = player.action_phase()
+            action_cache = player.action_phase(self.table)
 
             for action in action_cache:
                 # Apply each action to every other player
                 for other in [p for p in self.players if p != player]:
-                    action(other, AGENT_TYPES.OTHER, PHASE_TYPES.IMMEDIATE)
+                    action(other, AGENT_TYPES.OTHER, PHASE_TYPES.IMMEDIATE, self.table)
 
             
             # Buy phase, changes table
@@ -54,7 +54,7 @@ class Dominion:
     def reset(self):
         self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
         self.turn = 0
-        self.table = Table()
+        self.table = Table(NUM_PLAYERS)
 
 dominion = Dominion()
 dominion.play()
