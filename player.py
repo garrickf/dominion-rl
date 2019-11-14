@@ -1,7 +1,7 @@
 from math import floor
 from deck import Deck
 from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE, GARDENS
-from util import get_integer
+from util import get_integer, get_choice
 
 NUM_TO_DRAW = 5
 
@@ -56,6 +56,15 @@ class Player:
         return total
 
 
+    @property
+    def valid_actions(self):
+        """
+        Returns a list of valid actions. No action is always valid, though frowned
+        upon.
+        """
+        return [idx for idx, card in enumerate(self.hand) if card.type == CARD_TYPES.ACTION] + [None]
+
+
     def action_phase(self, table):
         """
         During the action phase, a player can play any action card from their
@@ -70,36 +79,29 @@ class Player:
                 break
 
             print('{} action(s) left.'.format(self.num_actions))
-            print('Play an action (0-{}) or ENTER to skip'.format(len(self.hand)-1))
-            action = get_integer('? ') # TODO: out of bounds error checking is needed here
+            prompt_str = 'Play an action (0-{}) or ENTER to skip'.format(len(self.hand)-1)
+            action = get_choice(prompt_str, choice_set=self.valid_actions)
             if action == None:
                 break
-            
-            while not self.hand[action].type == CARD_TYPES.ACTION:
-                print('Not an action, try again!')
-                print('Play an action (0-{}) or ENTER to skip'.format(len(self.hand)-1))
-                action = get_integer("? ")
-                if action == None:
-                    # TODO: decompose better, the logic here isn't nice
-                    self.num_actions = 1
-                    return
 
             card = self.hand.pop(action)
+            print('{} played {}\n'.format(self.name, card))
             self.deck.discard([card]) # Place into discard
-            # card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
 
-            # New: Generator style code:
             g = card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
-            if g == None:
-                print('(player) Action complete.')
-            else:
-                choices = next(g)
+            if g != None:
+                # The generator must be called once to start the action
+                choices, prompt_str = next(g)
                 while True:
-                    try: 
-                        choice = get_integer('? ')
-                        choices = g.send(choice)
+                    try:
+                        """
+                        The action generator returns a set of valid choices. From
+                        those, we prompt the player to enter one, and pass the
+                        choice back to the generator.
+                        """
+                        choice = get_choice(prompt_str, choice_set=choices)
+                        choices, prompt_str = g.send(choice)
                     except:
-                        print('(player) generator function done.')
                         break
             
             if card.action.affects_others:
@@ -107,12 +109,12 @@ class Player:
 
             self.num_actions -= 1
             self.display_hand()
+        print('{} concludes action phase\n'.format(self.name))
 
-        # Debug
+        # Debug: Cards should not disappear without our consent
         assert(self.deck.size == self.deck.draw_pile_size + self.deck.discard_pile_size + len(self.hand))
 
-        # Reset
-        self.num_actions = 1
+        # Return action cache to game, so actions can be applied to other players.
         return action_cache
 
 
@@ -124,40 +126,34 @@ class Player:
             print('On the table for purchase:')
             print(table)
 
-            # Prompt
-            print('Make a purchase or ENTER to skip')
-            choice = get_integer("? ")
+            purchasable = table.get_purchasable_cards(pp)
+            prompt_str = 'Make a purchase or ENTER to skip'
+            choice = get_choice(prompt_str, choice_set=purchasable + [None])
             if choice == None:
                 break
-            
-            while not table.can_purchase(choice, pp):
-                print('Can\'t buy that, try again!')
-                print('Make a purchase or ENTER to skip')
-                choice = get_integer("? ")
-                if choice == None:
-                    self.num_buys = 1
-                    return
 
             # Buy card and update pp
             card = table.buy_idx(choice)
+            print('{} bought {}\n'.format(self.name, card))
             pp -= card.cost
             self.num_buys -= 1
             self.deck.add_new(card)
-
-        # Reset
-        self.extra_treasure = 0
-        self.num_buys = 1
+        print('{} concludes buy phase\n'.format(self.name))
 
 
     def cleanup_hand(self):
         self.deck.discard(self.hand)
+        self.extra_treasure = 0
+        self.num_actions = 1
+        self.num_buys = 1
 
 
     def draw_cards(self):
         new_hand = self.deck.draw(NUM_TO_DRAW)
         self.hand = new_hand
+        print('{} draws {} cards\n'.format(self.name, NUM_TO_DRAW))
 
-        # Debug
+        # Debug: Should always start with a full hand
         assert(len(self.hand) == NUM_TO_DRAW)
 
 

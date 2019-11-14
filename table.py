@@ -52,6 +52,19 @@ class Table:
         return card.cost <= treasures and left >= 1
 
 
+    def get_purchasable_cards(self, worth, card_type_only=None):
+        """
+        Return the set of cards available for purchase as a list of indexes.
+        """
+        purchasable = []
+        for idx, (card, left) in enumerate(list(self.table.items())):
+            if card_type_only and card.type != card_type_only:
+                continue
+            if card.cost <= worth and left >= 1:
+                purchasable.append(idx)
+        return purchasable
+
+
     def buy_idx(self, idx):
         """
         When passed an index of a card, perform a purchase of the card, removing

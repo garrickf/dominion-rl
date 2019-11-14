@@ -3,6 +3,7 @@ import os
 from player import Player
 from table import Table
 from card import AGENT_TYPES, PHASE_TYPES
+from util import color_box
 
 NUM_PLAYERS = 2
 
@@ -21,8 +22,8 @@ class Dominion:
         while True:
             player = self.players[self.turn]
             os.system('clear')
-            print('Player {}\'s turn!'.format(self.turn+1))
-
+            print(color_box('Player {}\'s turn!'.format(self.turn+1), idx=self.turn+1))
+                                          
             # Action phase
             player.display_state()
             action_cache = player.action_phase(self.table)

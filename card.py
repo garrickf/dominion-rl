@@ -109,39 +109,52 @@ def card_list_to_string(cards):
     return s[:-2] # Strip remaining two characters
 
 
-def card_list_to_options(cards, only_idxs=None):
+def card_list_to_options(cards, only_idxs=None, can_escape=False):
     s = 'Options:\n'
     for idx, card in enumerate(cards):
         if only_idxs and idx not in only_idxs: 
             continue
         s += '{}. {}\n'.format(idx, card)
+
+    if can_escape:
+        s += 'ENTER: End action\n'
     return s
 
+"""
+See below for an example generator. A generator is responsible for:
+- Returning a tuple of the choices one can make, and the prompt string of what to ask
+- Printing the required info for a (human) player to make the decision
 
+An action either induces a state change on the agent passed in, or creates a multi-
+step generator function that the agent is expected to call until completion. Actions
+are cased on the agent type (self, other) and the phase (immediate, buy, action,
+reaction) such that actions applied to other players can induce different effects 
+or processes.
+"""
 def chapel_action(agent, agent_type, phase, table):
     def generator():
         """
-        First yield: none
-        Second onwards: more and more choices are made
+        The chapel allows a player to trash up to four cards from their hand. The 
+        action is structured as a sequence up to four subactions you can escape at 
+        any time.
         """
-        choices = [i for i in range(len(agent.hand))]
+        choices = [i for i in range(len(agent.hand))] + [None] # Can finish action at any time
         to_remove_idxs = []
         for i in range(4):
             
             # Prompt agent to make choice from set of discrete choices
-            print(card_list_to_options(agent.hand, only_idxs=choices))
-            print('Choose a card to trash ({}/4): '.format(i+1))
-            choice = (yield choices)
+            print(card_list_to_options(agent.hand, only_idxs=choices, can_escape=True))
+            prompt_str = 'Choose a card to trash ({}/4)'.format(i+1)
+            choice = (yield choices, prompt_str)
 
             assert(choice == None or type(choice) == int)
             if choice == None:
                 break
             
-            print('Chose to trash {}'.format(agent.hand[choice]))
+            print('{} trashed {}'.format(agent.name, agent.hand[choice]))
             agent.deck.trash(agent.hand[choice])
             to_remove_idxs.append(choice)
             choices = [i for i in choices if i != choice]
-        print('Finish action.')
         agent.hand = [card for idx, card in enumerate(agent.hand) if idx not in to_remove_idxs]
         return
 
@@ -150,7 +163,8 @@ def chapel_action(agent, agent_type, phase, table):
     else:
         return None
 chapel_action.affects_others=False
-CHAPEL = Card('Chapel', CARD_TYPES.ACTION, cost=2, action=chapel_action, card_desc='Trash up to four cards from your hand.')
+CHAPEL = Card('Chapel', CARD_TYPES.ACTION, cost=2, action=chapel_action, 
+              card_desc='Trash up to four cards from your hand.')
 
 
 def smithy_action(agent, agent_type, phase, table):
@@ -175,7 +189,8 @@ def village_action(agent, agent_type, phase, table):
         agent.hand += newCards
         agent.num_actions += 2
 village_action.affects_others = False
-VILLAGE = Card('Village', CARD_TYPES.ACTION, cost=3, action=village_action, card_desc='+1 card. +2 actions.')
+VILLAGE = Card('Village', CARD_TYPES.ACTION, cost=3, action=village_action,
+               card_desc='+1 card. +2 actions.')
 
 
 def festival_action(agent, agent_type, phase, table):
