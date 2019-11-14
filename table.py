@@ -21,13 +21,16 @@ class Table:
             # Kingdom (10)
             CHAPEL: 10,
             SMITHY: 10,
+            VILLAGE: 10,
+            FESTIVAL: 10,
+            COUNCIL_ROOM: 10,
         })
 
 
     def __str__(self):
-        s = '    Name\t Left\tCost\n'
+        s = '{:<4}{:<20}{:<6}{:<5}\n'.format('', 'Name', 'Left', 'Cost')
         for i, (card, left) in enumerate(self.table.items()):
-            s += '{:>2}. {}\t[{:>4}] {:>5} | {}\n'.format(i, card, left, card.cost, card.description)
+            s += '{:>2}. {!s:<28} [{:>2}] {:>5} | {}\n'.format(i, card, left, card.cost, card.description)
         return s
 
 

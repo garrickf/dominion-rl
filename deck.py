@@ -24,6 +24,9 @@ class Deck:
         self.draw_pile += self.discard_pile
         self.discard_pile = []
 
+        num_cards = sum([v for v in self.counts.values()])
+        assert(len(self.draw_pile) == num_cards)
+
 
     def draw(self, n):
         # If draw pile is smaller than n, reshuffle
@@ -42,6 +45,10 @@ class Deck:
     def add_new(self, card):
         self.discard_pile.append(card)
         self.counts[card] += 1
+
+
+    def trash(self, card):
+        self.counts[card] -= 1
 
 
     def __str__(self):

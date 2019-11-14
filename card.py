@@ -97,6 +97,13 @@ AGENT_TYPES = Enum('AGENT_TYPES', 'SELF OTHER')
 PHASE_TYPES = Enum('PHASE_TYPES', 'IMMEDIATE ACTION BUY')
 
 
+def card_list_to_string(cards):
+    s = ''
+    for card in cards:
+        s += '{}, '.format(card)
+    return s[:-2] # Strip remaining two characters
+
+
 def chapel_action(agent, phase):
     print('I am supposed to do something!!!')
 CHAPEL = Card('Chapel', CARD_TYPES.ACTION, 10, cost=2, action=chapel_action, action_description='Trash up to four cards from your hand.')
@@ -107,9 +114,45 @@ def smithy_action(agent, agent_type, phase):
     If the agent is self and the phase is immediate, draw three cards into hand.
     """
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
-        print('Smithy: draw three cards into hand.')
         newCards = agent.deck.draw(3)
+        print('You drew {}'.format(card_list_to_string(newCards)))
         agent.hand += newCards
-        agent.display_hand()
 smithy_action.affects_others = False
 SMITHY = Card('Smithy', CARD_TYPES.ACTION, 10, cost=4, action=smithy_action, action_description='+3 cards.')
+
+
+def village_action(agent, agent_type, phase):
+    """
+    If the agent is self and the phase is immediate, draw one card and add 2 actions.
+    """
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        newCards = agent.deck.draw(1)
+        print('You drew {}'.format(card_list_to_string(newCards)))
+        agent.hand += newCards
+        agent.num_actions += 2
+village_action.affects_others = False
+VILLAGE = Card('Village', CARD_TYPES.ACTION, 10, cost=3, action=village_action, action_description='+1 card. +2 actions.')
+
+
+def festival_action(agent, agent_type, phase):
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        agent.num_actions += 2
+        agent.num_buys += 1
+        agent.extra_treasure += 2
+festival_action.affects_others = False
+FESTIVAL = Card('Festival', CARD_TYPES.ACTION, 10, cost=5, action=festival_action, action_description='+2 actions. +1 buy. +2 treasure.')
+
+
+def council_room_action(agent, agent_type, phase):
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        newCards = agent.deck.draw(4)
+        agent.hand += newCards
+        print('You drew {}'.format(card_list_to_string(newCards)))
+        agent.num_buys += 1
+    elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
+        newCards = agent.deck.draw(1)
+        agent.hand += newCards
+        print('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+council_room_action.affects_others = True # Uh oh
+COUNCIL_ROOM = Card('Council Room', CARD_TYPES.ACTION, 10, cost=5, action=council_room_action, action_description='+4 cards. +1 buy. Each other player draws a card.')
+

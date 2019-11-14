@@ -2,6 +2,7 @@ import numpy as np
 import os
 from player import Player
 from table import Table
+from card import AGENT_TYPES, PHASE_TYPES
 
 NUM_PLAYERS = 2
 
@@ -24,9 +25,15 @@ class Dominion:
 
             # Action phase
             player.display_state()
-            player.action_phase()
+            action_cache = player.action_phase()
+
+            for action in action_cache:
+                # Apply each action to every other player
+                for other in [p for p in self.players if p != player]:
+                    action(other, AGENT_TYPES.OTHER, PHASE_TYPES.IMMEDIATE)
+
+            
             # Buy phase, changes table
-            # TODO: display status somehow?
             player.buy_phase(self.table)
             if self.table.reached_end():
                 break
