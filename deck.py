@@ -1,5 +1,6 @@
 from card import Card, ESTATE, COPPER
 import random # For shuffle
+from collections import defaultdict
 
 """
 The deck implements a discard pile/draw pile with shuffle and reshuffle.
@@ -15,13 +16,16 @@ class Deck:
         random.shuffle(self.draw_pile)
         self.discard_pile = []
 
+        self.counts = defaultdict(int, {ESTATE: 3, COPPER: 7})
+
+
     def reshuffle(self):
         random.shuffle(self.discard_pile)
         self.draw_pile += self.discard_pile
         self.discard_pile = []
 
+
     def draw(self, n):
-        print(self)
         # If draw pile is smaller than n, reshuffle
         if len(self.draw_pile) < n: 
             self.reshuffle()
@@ -30,11 +34,18 @@ class Deck:
         self.draw_pile = self.draw_pile[n:]
         return drawn
 
+
     def discard(self, cards):
         self.discard_pile += cards
 
+
+    def add_new(self, card):
+        self.discard_pile.append(card)
+        self.counts[card] += 1
+
+
     def __str__(self):
-        s = ""
-        for card in self.draw_pile:
-            s += str(card) + '\n'
+        s = "Deck:\n"
+        for k, v in self.counts.items():
+            s += '{}: {}\n'.format(k, v)
         return s
