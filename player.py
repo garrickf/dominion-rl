@@ -2,7 +2,7 @@ from deck import Deck
 from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE
 from util import get_integer
 
-NUM_TO_DRAW = 7
+NUM_TO_DRAW = 5
 
 class Player:
     def __init__(self, i):
