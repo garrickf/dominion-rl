@@ -109,8 +109,47 @@ def card_list_to_string(cards):
     return s[:-2] # Strip remaining two characters
 
 
+def card_list_to_options(cards, only_idxs=None):
+    s = 'Options:\n'
+    for idx, card in enumerate(cards):
+        if only_idxs and idx not in only_idxs: 
+            continue
+        s += '{}. {}\n'.format(idx, card)
+    return s
+
+
 def chapel_action(agent, agent_type, phase, table):
-    print('I am supposed to do something!!!')
+    def generator():
+        """
+        First yield: none
+        Second onwards: more and more choices are made
+        """
+        choices = [i for i in range(len(agent.hand))]
+        to_remove_idxs = []
+        for i in range(4):
+            
+            # Prompt agent to make choice from set of discrete choices
+            print(card_list_to_options(agent.hand, only_idxs=choices))
+            print('Choose a card to trash ({}/4): '.format(i+1))
+            choice = (yield choices)
+
+            assert(choice == None or type(choice) == int)
+            if choice == None:
+                break
+            
+            print('Chose to trash {}'.format(agent.hand[choice]))
+            agent.deck.trash(agent.hand[choice])
+            to_remove_idxs.append(choice)
+            choices = [i for i in choices if i != choice]
+        print('Finish action.')
+        agent.hand = [card for idx, card in enumerate(agent.hand) if idx not in to_remove_idxs]
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+    else:
+        return None
+chapel_action.affects_others=False
 CHAPEL = Card('Chapel', CARD_TYPES.ACTION, cost=2, action=chapel_action, card_desc='Trash up to four cards from your hand.')
 
 

@@ -19,13 +19,25 @@ class Deck:
         self.counts = defaultdict(int, {ESTATE: 3, COPPER: 7})
 
 
+    @property
+    def size(self):
+        return sum([v for v in self.counts.values()])
+
+    
+    @property
+    def discard_pile_size(self):
+        return len(self.discard_pile)
+
+
+    @property
+    def draw_pile_size(self):
+        return len(self.draw_pile)
+
+
     def reshuffle(self):
         random.shuffle(self.discard_pile)
         self.draw_pile += self.discard_pile
         self.discard_pile = []
-
-        num_cards = sum([v for v in self.counts.values()])
-        assert(len(self.draw_pile) == num_cards)
 
 
     def draw(self, n):

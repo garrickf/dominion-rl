@@ -1,5 +1,6 @@
+from math import floor
 from deck import Deck
-from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE
+from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE, GARDENS
 from util import get_integer
 
 NUM_TO_DRAW = 5
@@ -85,13 +86,30 @@ class Player:
 
             card = self.hand.pop(action)
             self.deck.discard([card]) # Place into discard
-            card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
+            # card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
+
+            # New: Generator style code:
+            g = card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
+            if g == None:
+                print('(player) Action complete.')
+            else:
+                choices = next(g)
+                while True:
+                    try: 
+                        choice = get_integer('? ')
+                        choices = g.send(choice)
+                    except:
+                        print('(player) generator function done.')
+                        break
             
             if card.action.affects_others:
                 action_cache.append(card.action)
 
             self.num_actions -= 1
             self.display_hand()
+
+        # Debug
+        assert(self.deck.size == self.deck.draw_pile_size + self.deck.discard_pile_size + len(self.hand))
 
         # Reset
         self.num_actions = 1
@@ -139,6 +157,9 @@ class Player:
         new_hand = self.deck.draw(NUM_TO_DRAW)
         self.hand = new_hand
 
+        # Debug
+        assert(len(self.hand) == NUM_TO_DRAW)
+
 
     def compute_score(self):
         """
@@ -148,5 +169,5 @@ class Player:
         return self.deck.counts[ESTATE] * 1 \
             + self.deck.counts[DUTCHY] * 3 \
             + self.deck.counts[PROVINCE] * 6 \
-            + self.deck.counts[CURSE] * -1
-        # TODO: include garden
+            + self.deck.counts[CURSE] * -1 \
+            + self.deck.counts[GARDENS] * floor(self.deck.size / 10)
