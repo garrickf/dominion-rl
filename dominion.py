@@ -9,19 +9,19 @@ discard = []
 hand = [0,0,0,0,0,0]
 
 def dot(v1, v2):
-	return sum([v1[k] * v2[k] for k in range(len(v1))])
+    return sum([v1[k] * v2[k] for k in range(len(v1))])
 
 def drawCard(deck, hand):
-	card = choice([0, 1, 2, 3, 4, 5], 1, p=[x/sum(deck) for x in deck])[0]
-	hand[card] += 1
-	deck[card] -= 1
+    card = choice([0, 1, 2, 3, 4, 5], 1, p=[x/sum(deck) for x in deck])[0]
+    hand[card] += 1
+    deck[card] -= 1
 
 def drawHand(deck, hand):
-	for i in range(5):
-		if sum(deck) == 0:
-			deck = discard
-			discard = [0 for i in range(5)]
-		drawCard(deck, hand)
+    for i in range(5):
+        if sum(deck) == 0:
+            deck = discard
+            discard = [0 for i in range(5)]
+        drawCard(deck, hand)
 
 print("Money in deck: ", dot(deck, value))
 print("VP in deck: ", dot(deck, vp))
@@ -36,7 +36,7 @@ print("Hand: ", hand, 'Deck: ', deck)
 
 """
 class Player:
-	def __init__(self)
+    def __init__(self)
 
 player1 = Player()
 """
