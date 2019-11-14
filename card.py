@@ -3,7 +3,8 @@ from colorama import Fore, Back, Style
 from util import get_integer
 
 """
-Define the card class.
+Presents the implementation of the card class, as well as default card instances
+used in the game.
 """
 
 # Create an enum of card types
@@ -22,12 +23,11 @@ type_to_color = {
 
 class Card:
     """
-    A card critically has a name, cost, and starting pile size.
+    A card critically has a name and cost.
     """
-    def __init__(self, name, kind, init_size, **kwargs):
+    def __init__(self, name, kind, **kwargs):
         self.name = name
         self.type = kind
-        self.init_size = init_size
 
         self.card_desc = None
 
@@ -73,27 +73,28 @@ class Card:
 Victory cards
 """
 
-PROVINCE = Card('Province', CARD_TYPES.VICTORY, 12, cost=8, victory_points=6)
-DUTCHY = Card('Dutchy', CARD_TYPES.VICTORY, 12, cost=5, victory_points=3)
-ESTATE = Card('Estate', CARD_TYPES.VICTORY, 12, cost=2, victory_points=1)
-GARDENS = Card('Gardens', CARD_TYPES.VICTORY, 10, cost=4, victory_points=None, card_desc='Worth 1 VP per 10 cards you have (round down).')
+PROVINCE = Card('Province', CARD_TYPES.VICTORY, cost=8, victory_points=6)
+DUTCHY = Card('Dutchy', CARD_TYPES.VICTORY, cost=5, victory_points=3)
+ESTATE = Card('Estate', CARD_TYPES.VICTORY, cost=2, victory_points=1)
+GARDENS = Card('Gardens', CARD_TYPES.VICTORY, cost=4, victory_points=None, card_desc='Worth 1 VP per 10 cards you have (round down).')
 
 """
 Treasure cards
 """
 
-GOLD = Card('Gold', CARD_TYPES.TREASURE, 30, cost=6, treasure_value=3)
-SILVER = Card('Silver', CARD_TYPES.TREASURE, 40, cost=3, treasure_value=2)
-COPPER = Card('Copper', CARD_TYPES.TREASURE, 60, cost=0, treasure_value=1)
+GOLD = Card('Gold', CARD_TYPES.TREASURE, cost=6, treasure_value=3)
+SILVER = Card('Silver', CARD_TYPES.TREASURE, cost=3, treasure_value=2)
+COPPER = Card('Copper', CARD_TYPES.TREASURE, cost=0, treasure_value=1)
 
 """
 Curse card
 """
 
-CURSE = Card('Curse', CARD_TYPES.CURSE, 30, cost=0, victory_points=-1)
+CURSE = Card('Curse', CARD_TYPES.CURSE, cost=0, victory_points=-1)
 
 """
-Action cards
+Action cards. Actions work as functions that directly prompt users and modify 
+user state.
 """
 
 # Agent: self or other, phase = action, buy, immediate
@@ -110,7 +111,7 @@ def card_list_to_string(cards):
 
 def chapel_action(agent, agent_type, phase, table):
     print('I am supposed to do something!!!')
-CHAPEL = Card('Chapel', CARD_TYPES.ACTION, 10, cost=2, action=chapel_action, card_desc='Trash up to four cards from your hand.')
+CHAPEL = Card('Chapel', CARD_TYPES.ACTION, cost=2, action=chapel_action, card_desc='Trash up to four cards from your hand.')
 
 
 def smithy_action(agent, agent_type, phase, table):
@@ -122,7 +123,7 @@ def smithy_action(agent, agent_type, phase, table):
         print('You drew {}'.format(card_list_to_string(newCards)))
         agent.hand += newCards
 smithy_action.affects_others = False
-SMITHY = Card('Smithy', CARD_TYPES.ACTION, 10, cost=4, action=smithy_action, card_desc='+3 cards.')
+SMITHY = Card('Smithy', CARD_TYPES.ACTION, cost=4, action=smithy_action, card_desc='+3 cards.')
 
 
 def village_action(agent, agent_type, phase, table):
@@ -135,7 +136,7 @@ def village_action(agent, agent_type, phase, table):
         agent.hand += newCards
         agent.num_actions += 2
 village_action.affects_others = False
-VILLAGE = Card('Village', CARD_TYPES.ACTION, 10, cost=3, action=village_action, card_desc='+1 card. +2 actions.')
+VILLAGE = Card('Village', CARD_TYPES.ACTION, cost=3, action=village_action, card_desc='+1 card. +2 actions.')
 
 
 def festival_action(agent, agent_type, phase, table):
@@ -144,7 +145,7 @@ def festival_action(agent, agent_type, phase, table):
         agent.num_buys += 1
         agent.extra_treasure += 2
 festival_action.affects_others = False
-FESTIVAL = Card('Festival', CARD_TYPES.ACTION, 10, cost=5, action=festival_action, card_desc='+2 actions. +1 buy. +2 treasure.')
+FESTIVAL = Card('Festival', CARD_TYPES.ACTION, cost=5, action=festival_action, card_desc='+2 actions. +1 buy. +2 treasure.')
 
 
 def council_room_action(agent, agent_type, phase, table):
@@ -158,7 +159,7 @@ def council_room_action(agent, agent_type, phase, table):
         agent.hand += newCards
         print('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
 council_room_action.affects_others = True # Uh oh
-COUNCIL_ROOM = Card('Council Room', CARD_TYPES.ACTION, 10, cost=5, action=council_room_action, card_desc='+4 cards. +1 buy. Each other player draws a card.')
+COUNCIL_ROOM = Card('Council Room', CARD_TYPES.ACTION, cost=5, action=council_room_action, card_desc='+4 cards. +1 buy. Each other player draws a card.')
 
 
 def laboratory_action(agent, agent_type, phase, table):
@@ -168,7 +169,7 @@ def laboratory_action(agent, agent_type, phase, table):
         print('You drew {}'.format(card_list_to_string(newCards)))
         agent.num_actions += 1
 laboratory_action.affects_others = False
-LABORATORY = Card('Laboratory', CARD_TYPES.ACTION, 10, cost=5, action=laboratory_action, card_desc='+2 cards. +1 action.')
+LABORATORY = Card('Laboratory', CARD_TYPES.ACTION, cost=5, action=laboratory_action, card_desc='+2 cards. +1 action.')
 
 
 def market_action(agent, agent_type, phase, table):
@@ -180,7 +181,7 @@ def market_action(agent, agent_type, phase, table):
         agent.num_buys += 1
         agent.extra_treasure += 1
 market_action.affects_others = False
-MARKET = Card('Market', CARD_TYPES.ACTION, 10, cost=5, action=market_action, card_desc='+1 card. +1 action. +1 buy. +1 treasure.')
+MARKET = Card('Market', CARD_TYPES.ACTION, cost=5, action=market_action, card_desc='+1 card. +1 action. +1 buy. +1 treasure.')
 
 
 def witch_action(agent, agent_type, phase, table):
@@ -193,7 +194,7 @@ def witch_action(agent, agent_type, phase, table):
         agent.deck.add_new(CURSE)
         print('{} gains a {}!'.format(agent.name, CURSE))
 witch_action.affects_others = True
-WITCH = Card('Witch', CARD_TYPES.ACTION, 10, cost=5, action=witch_action, card_desc='+2 cards. Each other player gains a curse.')
+WITCH = Card('Witch', CARD_TYPES.ACTION, cost=5, action=witch_action, card_desc='+2 cards. Each other player gains a curse.')
 
 
 def mine_action(agent, agent_type, phase, table):
@@ -220,4 +221,4 @@ def mine_action(agent, agent_type, phase, table):
         card = table.buy_idx(choice)
         agent.deck.add_new(card)
 mine_action.affects_others = False
-MINE = Card('Mine', CARD_TYPES.ACTION, 10, cost=5, action=mine_action, card_desc='You may trash a treasure from your hand. Gain a treasure to your hand costing up to 3 more than it.')
+MINE = Card('Mine', CARD_TYPES.ACTION, cost=5, action=mine_action, card_desc='You may trash a treasure from your hand. Gain a treasure to your hand costing up to 3 more than it.')
