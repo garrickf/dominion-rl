@@ -1,6 +1,7 @@
 from enum import Enum
 from colorama import Fore, Back, Style
 from util import get_integer
+from utilities.log import Log
 
 """
 Presents the implementation of the card class, as well as default card instances
@@ -19,6 +20,7 @@ TYPE_TO_COLOR = {
     CARD_TYPES.ACTION: Fore.CYAN,
     CARD_TYPES.CURSE: Fore.BLUE,
 }
+game_log = Log()
 
 
 class Card:
@@ -55,7 +57,7 @@ class Card:
             color = TREASURE_TO_COLOR[self.name]
         else: 
             color = TYPE_TO_COLOR[self.type]
-        return '{}{}{}'.format(color, self.name, Style.RESET_ALL)
+        return '{}{}{}'.format(color, self.name, Fore.WHITE)
 
 
     @property
@@ -113,16 +115,26 @@ def card_list_to_string(cards):
     return s[:-2] # Strip remaining two characters
 
 
-def card_list_to_options(cards, only_idxs=None, can_escape=False):
-    s = 'Options:\n'
-    for idx, card in enumerate(cards):
-        if only_idxs and idx not in only_idxs: 
-            continue
-        s += '{}. {}\n'.format(idx, card)
+def card_list_to_options(cards, only_idxs=None, can_escape=False, verbose=False):
+    if not verbose:
+        s = 'Options:\n'
+        for idx, card in enumerate(cards):
+            if only_idxs and idx not in only_idxs: 
+                continue
+            s += '{}. {}\n'.format(idx, card)
 
-    if can_escape:
-        s += 'ENTER: End action\n'
-    return s
+        if can_escape:
+            s += 'ENTER: End action\n'
+        return s
+    else:
+        s = 'Options:\n'
+        s += '{:<4}{:<14}{:<7}{:<}\n'.format('', 'Name', 'Cost', 'Description')
+        for i, card in enumerate(cards):
+            s += '{:>2}. {!s:<23} ({:>2}) | {}\n'.format(i, card, card.cost, card.description)
+        
+        if can_escape:
+            s += 'ENTER: End action\n'
+        return s
 
 """
 See below for an example generator. A generator is responsible for:
@@ -155,7 +167,7 @@ def chapel_action(agent, agent_type, phase, table):
             if choice == None:
                 break
             
-            print('{} trashed {}'.format(agent.name, agent.hand[choice]))
+            game_log.add_message('{} trashed {}'.format(agent.name, agent.hand[choice]))
             agent.deck.trash(agent.hand[choice])
             to_remove_idxs.append(choice)
             choices = [i for i in choices if i != choice]
@@ -177,7 +189,7 @@ def smithy_action(agent, agent_type, phase, table):
     """
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(3)
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
         agent.hand += newCards
 smithy_action.affects_others = False
 SMITHY = Card('Smithy', CARD_TYPES.ACTION, cost=4, action=smithy_action, card_desc='+3 cards.')
@@ -189,7 +201,7 @@ def village_action(agent, agent_type, phase, table):
     """
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(1)
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
         agent.hand += newCards
         agent.num_actions += 2
 village_action.affects_others = False
@@ -210,12 +222,12 @@ def council_room_action(agent, agent_type, phase, table):
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(4)
         agent.hand += newCards
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
         agent.num_buys += 1
     elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(1)
         agent.hand += newCards
-        print('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
 council_room_action.affects_others = True # Uh oh
 COUNCIL_ROOM = Card('Council Room', CARD_TYPES.ACTION, cost=5, action=council_room_action, card_desc='+4 cards. +1 buy. Each other player draws a card.')
 
@@ -224,7 +236,7 @@ def laboratory_action(agent, agent_type, phase, table):
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(2)
         agent.hand += newCards
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
         agent.num_actions += 1
 laboratory_action.affects_others = False
 LABORATORY = Card('Laboratory', CARD_TYPES.ACTION, cost=5, action=laboratory_action, card_desc='+2 cards. +1 action.')
@@ -234,7 +246,7 @@ def market_action(agent, agent_type, phase, table):
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(1)
         agent.hand += newCards
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
         agent.num_actions += 1
         agent.num_buys += 1
         agent.extra_treasure += 1
@@ -246,13 +258,13 @@ def witch_action(agent, agent_type, phase, table):
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(2)
         agent.hand += newCards
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
     elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
         if table.get_card(CURSE):
             agent.deck.add_new(CURSE)
-            print('{} gains a {}!'.format(agent.name, CURSE))
+            game_log.add_message('{} gains a {}!'.format(agent.name, CURSE))
         else:
-            print('{} cannot gain a {} because there are no more'.format(agent.name, CURSE))
+            game_log.add_message('{} cannot gain a {} because there are no more'.format(agent.name, CURSE))
 witch_action.affects_others = True
 WITCH = Card('Witch', CARD_TYPES.ACTION, cost=5, action=witch_action, card_desc='+2 cards. Each other player gains a curse.')
 
@@ -279,29 +291,27 @@ def mine_action(agent, agent_type, phase, table):
         cond = lambda card, i: card in TREASURES
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
+        action_set += [None]
         print(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Trash a treasure from your hand'
         choice = (yield action_set, prompt_str)
-
-        if choice == None:
-            return
+        assert(choice != None)
 
         card = agent.hand.pop(action_to_idx[choice])
         agent.deck.trash(card)
-        print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
         worth = card.cost + 3
 
         action_to_idx, cards, action_set = filter_actions(TREASURES, lambda card, i: table.can_purchase_card(card, worth))
+        action_set += [None]
         print(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Gain a treasure costing up to (3) more than what you trashed'
 
         choice = (yield action_set, prompt_str)
-
-        if choice == None:
-            return
+        assert(choice != None)
 
         card = table.buy_idx(action_to_idx[choice])
-        print('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
         agent.deck.add_new(card)
         return
     
@@ -319,6 +329,7 @@ def moneylender_action(agent, agent_type, phase, table):
         cond = lambda card, i: card == COPPER
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
+        action_set += [None]
         print(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Trash a Copper from your hand'
         choice = (yield action_set, prompt_str)
@@ -328,7 +339,7 @@ def moneylender_action(agent, agent_type, phase, table):
 
         card = agent.hand.pop(action_to_idx[choice])
         agent.deck.trash(card)
-        print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
         agent.extra_treasure += 3
         return
     
@@ -346,8 +357,9 @@ def remodel_action(agent, agent_type, phase, table):
         cond = lambda card, i: True
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
+        action_set += [None] # Optional
         print(card_list_to_options(cards, can_escape=True))
-        prompt_str = 'Trash a card from your hand'
+        prompt_str = 'You may trash a card from your hand'
         choice = (yield action_set, prompt_str)
 
         if choice == None:
@@ -355,11 +367,12 @@ def remodel_action(agent, agent_type, phase, table):
 
         card = agent.hand.pop(action_to_idx[choice])
         agent.deck.trash(card)
-        print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
         
         worth = card.cost + 2
         action_to_idx, cards, action_set = filter_actions(table.cards, lambda card, i: table.can_purchase(i, worth))
-        print(card_list_to_options(cards, can_escape=True))
+        action_set += [None]
+        print(card_list_to_options(cards, can_escape=True, verbose=True))
         prompt_str = 'Gain a card costing up to ({} + {} = {})'.format(card.cost, 2, worth)
         choice = (yield action_set, prompt_str)
 
@@ -367,7 +380,7 @@ def remodel_action(agent, agent_type, phase, table):
             return
 
         card = table.buy_idx(action_to_idx[choice])
-        print('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
         agent.deck.add_new(card)
         return
     
@@ -383,7 +396,8 @@ def artisan_action(agent, agent_type, phase, table):
     def generator():
         worth = 5
         action_to_idx, cards, action_set = filter_actions(table.cards, lambda card, i: table.can_purchase(i, worth))
-        print(card_list_to_options(cards, can_escape=True))
+        print(card_list_to_options(cards, can_escape=True, verbose=True))
+        action_set += [None]
         prompt_str = 'Gain a card to your hand costing up to (5)'
         choice = (yield action_set, prompt_str)
 
@@ -391,7 +405,7 @@ def artisan_action(agent, agent_type, phase, table):
             return
 
         card = table.buy_idx(action_to_idx[choice])
-        print('{} added {} to hand'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} added {} to hand'.format(agent.name, card)) # TODO: migrate to player
         agent.hand.append(card)
         agent.deck.count(card)
 
@@ -399,7 +413,7 @@ def artisan_action(agent, agent_type, phase, table):
         cond = lambda card, i: True
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
-        print(card_list_to_options(cards, can_escape=False))
+        print(card_list_to_options(cards, can_escape=False, verbose=True))
         prompt_str = 'Put a card from your hand onto your deck'
         choice = (yield action_set, prompt_str)
 
@@ -407,7 +421,7 @@ def artisan_action(agent, agent_type, phase, table):
 
         card = agent.hand.pop(action_to_idx[choice])
         agent.deck.push(card)
-        print('{} put {} on top of their deck'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} put {} on top of their deck'.format(agent.name, card)) # TODO: migrate to player
         return
     
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
@@ -422,7 +436,7 @@ def merchant_action(agent, agent_type, phase, table):
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         newCards = agent.deck.draw(1)
         agent.hand += newCards
-        print('You drew {}'.format(card_list_to_string(newCards)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
         agent.num_actions += 1
     elif agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.BUY:
         if SILVER in agent.hand:
@@ -442,24 +456,26 @@ def bureaucrat_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
         
         if not cards:
-            print('{} reveals their hand: {}'.format(agent.name, card_list_to_string(agent.hand)))
+            game_log.add_message('{} reveals their hand: {}'.format(agent.name, card_list_to_string(agent.hand)))
             return
 
         print(card_list_to_options(cards, can_escape=False))
         prompt_str = 'Reveal a victory card and put it onto your deck'
         choice = (yield action_set, prompt_str)
+        
+        assert(choice != None)
 
         card = agent.hand.pop(action_to_idx[choice])
-        print('{} reveals {} and puts in onto their deck'.format(agent.name, card))
+        game_log.add_message('{} reveals {} and puts in onto their deck'.format(agent.name, card))
         agent.deck.push(card)
         return
     
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         if table.get_card(SILVER):
             agent.deck.add_new(SILVER)
-            print('{} gains a {}!'.format(agent.name, SILVER))
+            game_log.add_message('{} gains a {}!'.format(agent.name, SILVER))
         else:
-            print('{} cannot gain a {} because there are no more'.format(agent.name, SILVER))
+            game_log.add_message('{} cannot gain a {} because there are no more'.format(agent.name, SILVER))
     elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
         return generator()
 bureaucrat_action.affects_others = True
@@ -483,7 +499,7 @@ def militia_action(agent, agent_type, phase, table):
 
             assert(choice != None)
             
-            print('{} discarded {}'.format(agent.name, agent.hand[choice]))
+            game_log.add_message('{} discarded {}'.format(agent.name, agent.hand[choice]))
             agent.deck.trash(agent.hand[choice])
             to_remove_idxs.append(choice)
             action_set = [i for i in action_set if i != choice]
@@ -507,14 +523,17 @@ def workshop_action(agent, agent_type, phase, table):
         cond = lambda card, i: table.can_purchase_card(card, 4)
 
         action_to_idx, cards, action_set = filter_actions(table.cards, cond)
-        print(card_list_to_options(cards, can_escape=False))
+        action_set += [None] # Optional
+        print(card_list_to_options(cards, can_escape=True, verbose=True))
         prompt_str = 'Gain a card costing up to (4).'
 
         choice = (yield action_set, prompt_str)
-        assert(choice != None)
+        
+        if choice == None:
+            return
 
         card = table.buy_idx(action_to_idx[choice])
-        print('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
         agent.deck.add_new(card)
         return
 
@@ -544,7 +563,7 @@ def throne_room_action(agent, agent_type, phase, table):
         card = agent.hand.pop(action_to_idx[choice])
         agent.deck.discard([card])
 
-        print('{} played {}'.format(agent.name, card)) # TODO: migrate to player
+        game_log.add_message('{} played {}'.format(agent.name, card)) # TODO: migrate to player
         agent.throne_room_action = card.action
         return
 

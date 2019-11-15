@@ -2,6 +2,9 @@ from card import *
 from collections import OrderedDict as ordereddict
 import numpy as np
 
+# Flip to True to test all cards.
+DEBUG = False
+
 class Table:
     def __init__(self, num_players):
         """
@@ -10,9 +13,9 @@ class Table:
 
         # Choose 10 cards without replacement from set of all kingdom cards
         kingdom = np.random.choice(KINGDOM_CARDS, size=10, replace=False)
-        # Debug
-        # for card in kingdom:
-        #     print(card)
+        
+        if DEBUG:
+            kingdom = KINGDOM_CARDS
 
         # Use a ordered dict to allow indexing with a number
         self.table = ordereddict({
@@ -23,36 +26,19 @@ class Table:
             DUTCHY: 8 if num_players == 2 else 12,
             PROVINCE: 8 if num_players == 2 else 12,
             CURSE: 10 * (num_players - 1),
-            # Kingdom (10 selected at random)
-            CHAPEL: 10,
-            SMITHY: 10,
-            VILLAGE: 10,
-            FESTIVAL: 10,
-            COUNCIL_ROOM: 10,
-            MARKET: 10,
-            LABORATORY: 10,
-            WITCH: 10,
-            GARDENS: 10,
-            MINE: 10,
-            # TESTING
-            MONEYLENDER: 10,
-            REMODEL: 10,
-            ARTISAN: 10,
-            MERCHANT: 10,
-            BUREAUCRAT: 10,
-            MILITIA: 10,
-            WORKSHOP: 10,
-            THRONE_ROOM: 10,
         })
+
+        for card in kingdom:
+            self.table[card] = 10
 
 
     def __str__(self):
         """
         Returns a string representation of the table.
         """
-        s = '{:<4}{:<20}{:<6}{:<5}\n'.format('', 'Name', 'Left', 'Cost')
+        s = '{:<4}{:<14}{:<5}{:<7}{:<}\n'.format('', 'Name', 'Left', 'Cost', 'Description')
         for i, (card, left) in enumerate(self.table.items()):
-            s += '{:>2}. {!s:<28} [{:>2}] {:>5} | {}\n'.format(i, card, left, card.cost, card.description)
+            s += '{:>2}. {!s:<23} [{:>2}] ({:>2}) | {}\n'.format(i, card, left, card.cost, card.description)
         return s
 
 

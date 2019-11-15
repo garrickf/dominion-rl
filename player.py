@@ -1,9 +1,13 @@
 from math import floor
 from deck import Deck
 from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE, GARDENS
-from util import get_integer, get_choice
+from util import get_integer, get_choice, colorize
+from utilities.log import Log
+from colorama import Style
 
+# Set to 7 to debug more easily
 NUM_TO_DRAW = 7
+game_log = Log()
 
 class Player:
     def __init__(self, i):
@@ -12,6 +16,7 @@ class Player:
         and a discard pile.
         """
         self.player_number = i
+        self.type = 'Human'
         self.hand = []
         self.deck = Deck()
 
@@ -27,11 +32,12 @@ class Player:
     def display_hand(self):
         s = 'Current hand:\n'
         for idx, card in enumerate(self.hand):
-            s += '{}. {}\n'.format(idx, card)
-        print(s)
+            s += '{}. {}, '.format(idx, card)
+        print(s[:-2] + '\n')
 
 
     def display_state(self):
+        print('{}Game Log\n{}{}\n> Playing!\n'.format(Style.DIM, game_log.recent, Style.RESET_ALL))
         print(self.deck)
 
 
@@ -45,7 +51,12 @@ class Player:
 
     @property
     def name(self):
-        return 'Player {} ({})'.format(self.player_number, 'Human') # TODO: add (Computer)
+        return colorize('Player {} ({})'.format(self.player_number, self.type), idx=self.player_number)
+        
+
+    @property
+    def raw_name(self): 
+        return 'Player {} ({})'.format(self.player_number, self.type)
 
 
     @property
@@ -116,7 +127,7 @@ class Player:
                 break
 
             card = self.hand.pop(action_idx)
-            print('{} played {}\n'.format(self.name, card))
+            game_log.add_message('{} played {}\n'.format(self.name, card))
             self.deck.discard([card]) # Place into discard
 
             # Execute the action
@@ -161,7 +172,7 @@ class Player:
 
             # Buy card and update pp
             card = table.buy_idx(choice)
-            print('{} bought {}\n'.format(self.name, card))
+            game_log.add_message('{} bought {}'.format(self.name, card))
             pp -= card.cost
             self.num_buys -= 1
             self.deck.add_new(card)
@@ -179,7 +190,7 @@ class Player:
     def draw_cards(self):
         new_hand = self.deck.draw(NUM_TO_DRAW)
         self.hand = new_hand
-        print('{} draws {} cards\n'.format(self.name, NUM_TO_DRAW))
+        game_log.add_message('{} draws {} cards'.format(self.name, NUM_TO_DRAW))
 
         # Debug: Should always start with a full hand
         assert(len(self.hand) == NUM_TO_DRAW)

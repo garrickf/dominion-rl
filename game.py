@@ -4,8 +4,10 @@ from player import Player
 from table import Table
 from card import AGENT_TYPES, PHASE_TYPES
 from util import color_box
+from utilities.log import Log
 
 NUM_PLAYERS = 2
+game_log = Log()
 
 class Dominion:
     def __init__(self):
@@ -23,12 +25,13 @@ class Dominion:
         the action phase (i.e. if a card is obtained) or the buy phase, so the 
         state of the table is checked after both phases.
         """
-        print('Starting game of Dominion...')
+        game_log.add_message('Starting game of Dominion...')
         while True:
             player = self.players[self.turn]
             os.system('clear')
-            print(color_box('{}\'s turn!'.format(player.name), idx=player.player_number))
-                                          
+            print(color_box('{}\'s turn!'.format(player.raw_name), idx=player.player_number))
+            game_log.add_message('{}\'s turn!'.format(player.name), suppress_output=True)
+
             # Action phase
             player.display_state()
             self_cache, other_cache = player.action_phase(self.table)
@@ -67,7 +70,7 @@ class Dominion:
 
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
-        print('Player {} won with a score of {}'.format(idx+1, scores[idx]))
+        game_log.add_message('Player {} won with a score of {}'.format(idx+1, scores[idx]))
 
 
     # TODO: reset game instance in order to play again.

@@ -48,20 +48,24 @@ def get_choice(prompt, choice_set=None):
     return choice
 
 
+switcher = {
+    0: Fore.WHITE,
+    1: Fore.RED, 
+    2: Fore.BLUE,
+    3: Fore.YELLOW,
+    4: Fore.GREEN,
+}
 def color_box(s, idx=0):
     """
     Function that creates a colored box based on the index passed in.
     """
-    switcher = {
-        0: Fore.WHITE,
-        1: Fore.RED, 
-        2: Fore.BLUE,
-        3: Fore.YELLOW,
-        4: Fore.GREEN,
-    }
     top_bar = '╭─{}─╮\n'.format(''.join(['─'] * len(s)))
     bottom_bar = '╰─{}─╯'.format(''.join(['─'] * len(s)))
     return '{}{}{}│ {} │\n{}{}'.format(Style.BRIGHT, switcher[idx], top_bar, s, bottom_bar, Style.RESET_ALL)
+
+
+def colorize(s, idx=0):
+    return '{}{}{}'.format(switcher[idx], s, Fore.WHITE)
 
 
 # Internal strings

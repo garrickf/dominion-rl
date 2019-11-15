@@ -74,5 +74,5 @@ class Deck:
     def __str__(self):
         s = "Deck:\n"
         for k, v in self.counts.items():
-            s += '{}: {}\n'.format(k, v)
-        return s
+            s += '{}: {}, '.format(k, v)
+        return s[:-2] + '\n'
