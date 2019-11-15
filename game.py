@@ -42,7 +42,7 @@ class Dominion:
                 # Apply each action to every other player
                 for other in [p for p in self.players if p != player]:
                     os.system('clear')
-                    print(color_box('{} is attacked!'.format(other.name), idx=other.player_number))
+                    print(color_box('{} is attacked!'.format(other.raw_name), idx=other.player_number))
                     other.execute_action(action, PHASE_TYPES.IMMEDIATE, self.table, self_initiated=False)
             if self.table.reached_end():
                 break
@@ -50,7 +50,7 @@ class Dominion:
             # Reverting to player if an action affecting other players was played
             if other_cache:
                 os.system('clear')
-                print(color_box('{} resumes their turn...'.format(player.name), idx=player.player_number))
+                print(color_box('{} resumes their turn...'.format(player.raw_name), idx=player.player_number))
                 player.display_state()
                 player.display_hand()
             
@@ -70,7 +70,7 @@ class Dominion:
 
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
-        game_log.add_message('Player {} won with a score of {}'.format(idx+1, scores[idx]))
+        game_log.add_message('{} won with a score of {}'.format(self.players[idx].name, scores[idx]))
 
 
     # TODO: reset game instance in order to play again.
