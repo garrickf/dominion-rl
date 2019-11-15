@@ -9,12 +9,12 @@ used in the game.
 
 # Create an enum of card types
 CARD_TYPES = Enum('CARD_TYPES', 'VICTORY TREASURE ACTION CURSE')
-treasure_to_color = {
+TREASURE_TO_COLOR = {
     'Copper': Fore.RED,
     'Silver': Fore.WHITE,
     'Gold': Fore.YELLOW,
 }
-type_to_color = {
+TYPE_TO_COLOR = {
     CARD_TYPES.VICTORY: Fore.GREEN,
     CARD_TYPES.ACTION: Fore.CYAN,
     CARD_TYPES.CURSE: Fore.BLUE,
@@ -52,9 +52,9 @@ class Card:
         """
         color = Fore.WHITE
         if self.type == CARD_TYPES.TREASURE:
-            color = treasure_to_color[self.name]
+            color = TREASURE_TO_COLOR[self.name]
         else: 
-            color = type_to_color[self.type]
+            color = TYPE_TO_COLOR[self.type]
         return '{}{}{}'.format(color, self.name, Style.RESET_ALL)
 
 
@@ -85,6 +85,8 @@ Treasure cards
 GOLD = Card('Gold', CARD_TYPES.TREASURE, cost=6, treasure_value=3)
 SILVER = Card('Silver', CARD_TYPES.TREASURE, cost=3, treasure_value=2)
 COPPER = Card('Copper', CARD_TYPES.TREASURE, cost=0, treasure_value=1)
+
+TREASURES = [COPPER, SILVER, GOLD]
 
 """
 Curse card
@@ -251,28 +253,56 @@ witch_action.affects_others = True
 WITCH = Card('Witch', CARD_TYPES.ACTION, cost=5, action=witch_action, card_desc='+2 cards. Each other player gains a curse.')
 
 
-def mine_action(agent, agent_type, phase, table):
-    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
-        # Trash a treasure from hand
-        agent.display_hand()
-        choice = get_integer('You can trash a treasure from your hand or ENTER to abort: ')
-        if choice == None: # TODO: more rigorous error checking
-            return
-        card = agent.hand.pop(choice)
-        agent.deck.trash(card)
-        pp = card.cost + 3
-        print(table)
-        choice = get_integer('Pick a treasure costing up to 3 more than the card you trashed: ')
-        if choice == None: # TODO: more rigorous error checking
-            return
-        
-        while not table.can_purchase(choice, pp, card_type_only=CARD_TYPES.TREASURE):
-            print('Can\'t buy that, try again!')
-            choice = get_integer('Pick a treasure costing up to 3 more than the card you trashed: ')
-            if choice == None:
-                return
+def filter_actions(arr, cond):
+    """
+    Valid actions should be labelled 0 to n, yet they may refer to indexes
+    in the full list. We can unpack a zipped array and rezip to get two in-order 
+    sequences of the original indices and the cards. The condition should be
+    a lambda function accepting a card and an index.
+    """
+    zipped = [(i, v) for i, v in enumerate(arr) if cond(v, i)]
+    action_to_idx, cards = zip(*zipped)
+    action_set = list(range(len(cards)))
 
-        card = table.buy_idx(choice)
+    return action_to_idx, cards, action_set
+
+
+def mine_action(agent, agent_type, phase, table):
+    def generator():
+        all_actions = agent.hand
+        cond = lambda card, i: card in TREASURES
+        action_to_idx, cards, action_set = filter_actions(all_actions, cond)
+        
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'Trash a treasure from your hand'
+        choice = (yield action_set, prompt_str)
+
+        if choice == None:
+            return
+
+        card = agent.hand.pop(action_to_idx[choice])
+        agent.deck.trash(card)
+        print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
+        worth = card.cost + 3
+
+        # TODO: can purchase kind of hacky right now, since table order isn't fixed.
+        action_to_idx, cards, action_set = filter_actions(TREASURES, lambda card, i: table.can_purchase(i, worth))
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'Gain a treasure costing up to 3 more than what you trashed'
+
+        choice = (yield action_set, prompt_str)
+
+        if choice == None:
+            return
+
+        card = table.buy_idx(action_to_idx[choice])
+        print('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
         agent.deck.add_new(card)
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+    else:
+        return None
 mine_action.affects_others = False
 MINE = Card('Mine', CARD_TYPES.ACTION, cost=5, action=mine_action, card_desc='You may trash a treasure from your hand. Gain a treasure to your hand costing up to 3 more than it.')
