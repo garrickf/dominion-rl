@@ -607,6 +607,93 @@ vassal_action.affects_others = False
 VASSAL = Card('Vassal', CARD_TYPES.ACTION, cost=3, action=vassal_action, card_desc='+(2). Discard the top card of your deck. If it\'s an action, you may play it.')
 
 
+def sentry_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Look at top 2 cards of deck, trash and/or discard any number of them.
+        Put the rest back on top in any order.
+        """
+
+        agent.num_actions += 1
+
+        newCards = agent.deck.draw(1)
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+        agent.hand += newCards
+
+        watch = agent.deck.draw(2)
+        action_to_idx, cards, action_set = filter_actions(watch, lambda card, i: True)
+
+        to_trash = []
+        while len(action_set) > 0:
+            print(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
+            prompt_str = 'Choose a card to trash, ENTER to discard instead.'
+
+            all_actions = action_set + [None]
+            choice = (yield all_actions, prompt_str)
+
+            if choice == None:
+                break
+
+            to_trash.append(choice)
+            action_set = [a for a in action_set if a != choice]
+
+        trashed_cards = [watch[action_to_idx[i]] for i in to_trash]
+        for card in trashed_cards:
+            agent.deck.trash(card)
+        watch = [card for i, card in enumerate(watch) if i not in to_trash]
+        if trashed_cards:
+            game_log.add_message('{} trashed {}'.format(agent.name, card_list_to_string(trashed_cards)))
+        
+        if not watch:
+            return
+
+        action_to_idx, cards, action_set = filter_actions(watch, lambda card, i: True)
+        to_discard = []
+        while len(action_set) > 0:
+            print(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
+            prompt_str = 'Choose a card to discard, ENTER to place back instead.'
+
+            all_actions = action_set + [None]
+            choice = (yield all_actions, prompt_str)
+
+            if choice == None:
+                break
+
+            to_discard.append(choice)
+            action_set = [a for a in action_set if a != choice]
+
+        discarded_cards = [watch[action_to_idx[i]] for i in to_discard]
+        agent.deck.discard(discarded_cards)
+        watch = [card for i, card in enumerate(watch) if i not in to_discard]
+        if discarded_cards:
+            game_log.add_message('{} discarded {}'.format(agent.name, card_list_to_string(discarded_cards)))
+
+        if not watch:
+            return
+
+        action_to_idx, cards, action_set = filter_actions(watch, lambda card, i: True)
+        order = []
+        while len(action_set) > 0:
+            print(card_list_to_options(cards, only_idxs=action_set, can_escape=False))
+            prompt_str = 'Pick card to put back on deck.'
+
+            choice = (yield action_set, prompt_str)
+            assert(choice != None)
+
+            order.append(choice)
+            action_set = [a for a in action_set if a != choice]
+
+        for i in order:
+            agent.deck.push(watch[action_to_idx[i]])
+
+        game_log.add_message('{} placed {} card(s) on top of their deck'.format(agent.name, len(order)))
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+sentry_action.affects_others = False
+SENTRY = Card('Sentry',  CARD_TYPES.ACTION, cost=5, action=sentry_action, card_desc='+1 card. +1 action. Look at the top 2 cards of your deck. Trash and/or discard any number of them. Put the rest back on top in any order.')
+
 
 KINGDOM_CARDS = [
     CHAPEL, 
@@ -628,4 +715,5 @@ KINGDOM_CARDS = [
     WORKSHOP,
     THRONE_ROOM,
     VASSAL,
+    SENTRY,
 ]
