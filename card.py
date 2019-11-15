@@ -260,6 +260,10 @@ def witch_action(agent, agent_type, phase, table):
         agent.hand += newCards
         game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
     elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
+        if MOAT in agent.hand:
+            game_log.add_message('{} reveals a {}, defending themselves!'.format(agent.name, MOAT))
+            return
+        
         if table.get_card(CURSE):
             agent.deck.add_new(CURSE)
             game_log.add_message('{} gains a {}!'.format(agent.name, CURSE))
@@ -451,6 +455,10 @@ def bureaucrat_action(agent, agent_type, phase, table):
         """
         Other players must reveal a victory card and put it on top of their deck.
         """
+        if MOAT in agent.hand:
+            game_log.add_message('{} reveals a {}, defending themselves!'.format(agent.name, MOAT))
+            return
+
         agent.display_hand()
         cond = lambda card, i: card in VICTORY_CARDS
         action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
@@ -466,7 +474,7 @@ def bureaucrat_action(agent, agent_type, phase, table):
         assert(choice != None)
 
         card = agent.hand.pop(action_to_idx[choice])
-        game_log.add_message('{} reveals {} and puts in onto their deck'.format(agent.name, card))
+        game_log.add_message('{} reveals {} and puts it onto their deck'.format(agent.name, card))
         agent.deck.push(card)
         return
     
@@ -487,6 +495,10 @@ def militia_action(agent, agent_type, phase, table):
         """
         Other players must discard down to three cards.
         """
+        if MOAT in agent.hand:
+            game_log.add_message('{} reveals a {}, defending themselves!'.format(agent.name, MOAT))
+            return
+
         agent.display_hand()
         cond = lambda card, i: True
         action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
@@ -499,12 +511,13 @@ def militia_action(agent, agent_type, phase, table):
 
             assert(choice != None)
             
-            game_log.add_message('{} discarded {}'.format(agent.name, agent.hand[choice]))
             agent.deck.trash(agent.hand[choice])
             to_remove_idxs.append(choice)
             action_set = [i for i in action_set if i != choice]
         
+        discarded_cards = [card for idx, card in enumerate(agent.hand) if idx in to_remove_idxs]
         agent.hand = [card for idx, card in enumerate(agent.hand) if idx not in to_remove_idxs]
+        game_log.add_message('{} discarded {}'.format(agent.name, card_list_to_string(discarded_cards)))
         return
     
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
@@ -736,6 +749,170 @@ poacher_action.affects_others = False
 POACHER = Card('Poacher', CARD_TYPES.ACTION, cost=4, action=poacher_action, card_desc='+1 card. +1 action. +(1). Discard a card per empty supply pile.')
 
 
+def library_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Draw until you have 7 cards in hand, skipping any action cards you choose to; set those aside, discarding them afterwards.
+        """
+        
+        skipped = []
+        while len(agent.hand) < 7:
+            newCards = agent.deck.draw(1)
+            
+            skip = False
+
+            card = newCards[0]
+            if card.type == CARD_TYPES.ACTION:
+                action_set = [0, None]
+                print(card_list_to_options([card], can_escape=True))
+                prompt_str = 'You may skip drawing this action card, discarding it.'
+                choice = (yield action_set, prompt_str)
+
+                if choice != None:
+                    skip = True
+                    skipped.append(card)
+
+            if skip:
+                game_log.add_message('{} skipped {}'.format(agent.name, card_list_to_string(newCards)))
+            else:
+                game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+                agent.hand += newCards
+
+        agent.deck.discard(skipped)
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+library_action.affects_others = False
+LIBRARY = Card('Library', CARD_TYPES.ACTION, cost=5, action=library_action, card_desc='Draw until you have 7 cards in hand, skipping any action cards you choose to; set those aside, discarding them afterwards.')
+
+
+def harbinger_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        +1 card. +1 action. Look through your discard pile. You may put a card from it onto your deck.
+        """
+        agent.num_actions += 1
+        newCards = agent.deck.draw(1)
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+        agent.hand += newCards
+        
+        action_to_idx, cards, action_set = filter_actions(agent.deck.discard_pile, lambda card, i: True)
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'You may choose a discarded card to put on top of your deck.'
+
+        all_actions = action_set + [None]
+        choice = (yield all_actions, prompt_str)
+
+        if choice == None:
+            return
+
+        card = agent.deck.discard_pile.pop(action_to_idx[choice])
+        agent.deck.push(card) # TODO: rename place_on_top? it's annoying
+        game_log.add_message('{} placed {} on top of their deck'.format(agent.name, card))
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+harbinger_action.affects_others = False
+HARBINGER = Card('Harbinger', CARD_TYPES.ACTION, cost=3, action=harbinger_action, card_desc='+1 card. +1 action. Look through your discard pile. You may put a card from it onto your deck.')
+
+
+def cellar_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Discard any number of cards, then draw that many.
+        """
+        to_discard = []
+        action_to_idx, cards, action_set = filter_actions(agent.hand, lambda card, i: True)
+        for i in range(len(agent.hand)):
+            print(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
+            prompt_str = 'Discard any card.'
+
+            all_actions = action_set + [None]
+            choice = (yield all_actions, prompt_str)
+
+            if choice == None:
+                break
+
+            to_discard.append(choice)
+            action_set = [a for a in action_set if a != choice]
+
+        discarded_cards = [agent.hand[action_to_idx[i]] for i in to_discard]
+        agent.deck.discard(discarded_cards)
+        agent.hand = [card for i, card in enumerate(agent.hand) if i not in to_discard]
+        if discarded_cards:
+            game_log.add_message('{} discarded {}'.format(agent.name, card_list_to_string(discarded_cards)))
+        else:
+            return
+
+        newCards = agent.deck.draw((len(to_discard)))
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+        agent.hand += newCards
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+cellar_action.affects_others = False
+CELLAR = Card('Cellar', CARD_TYPES.ACTION, cost=2, action=cellar_action, card_desc='Discard any number of cards, then draw that many.')
+
+
+def bandit_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Other players must reveal a victory card and put it on top of their deck.
+        """
+        if MOAT in agent.hand:
+            game_log.add_message('{} reveals a {}, defending themselves!'.format(agent.name, MOAT))
+            return
+
+        agent.display_hand()
+        top_two = agent.deck.draw(2)
+        cond = lambda card, i: card in TREASURES and card != COPPER
+        action_to_idx, cards, action_set = filter_actions(top_two, cond)
+        
+        game_log.add_message('{} reveals {} from the top of their deck'.format(agent.name, card_list_to_string(top_two)))
+
+        if not cards:
+            agent.deck.discard(top_two)
+            return
+
+        print(card_list_to_options(cards, can_escape=False))
+        prompt_str = 'Trash a revealed treasure!'
+        choice = (yield action_set, prompt_str)
+        
+        assert(choice != None)
+
+        card = top_two.pop(action_to_idx[choice])
+        agent.deck.trash(card)
+        agent.deck.discard(top_two)
+        game_log.add_message('{} trashes {}'.format(agent.name, card))
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        if table.get_card(GOLD):
+            agent.deck.add_new(GOLD)
+            game_log.add_message('{} gains a {}!'.format(agent.name, GOLD))
+        else:
+            game_log.add_message('{} cannot gain a {} because there are no more'.format(agent.name, GOLD))
+    elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+bandit_action.affects_others = True
+BANDIT = Card('Bandit', CARD_TYPES.ACTION, cost=5, action=bandit_action, card_desc='Gain a Gold. Each other player reveals the top 2 cards of their deck, trashes a revealed treasure other than Copper, and discards the rest.')
+
+
+def moat_action(agent, agent_type, phase, table):
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        """
+        Just draw two cards.
+        """
+        newCards = agent.deck.draw(2)
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+        agent.hand += newCards
+moat_action.affects_others = False
+MOAT = Card('Moat', CARD_TYPES.ACTION, cost=2, action=moat_action, card_desc='+2 cards. When another player plays an Attack card, you may first reveal this from your hand, to be unaffected by it.')
+
+
 KINGDOM_CARDS = [
     CHAPEL, 
     SMITHY, 
@@ -758,4 +935,9 @@ KINGDOM_CARDS = [
     VASSAL,
     SENTRY,
     POACHER,
+    LIBRARY,
+    HARBINGER,
+    CELLAR,
+    BANDIT,
+    MOAT,
 ]
