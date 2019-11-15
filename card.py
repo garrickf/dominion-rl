@@ -246,9 +246,11 @@ def witch_action(agent, agent_type, phase, table):
         agent.hand += newCards
         print('You drew {}'.format(card_list_to_string(newCards)))
     elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
-        table.get_card(CURSE)
-        agent.deck.add_new(CURSE)
-        print('{} gains a {}!'.format(agent.name, CURSE))
+        if table.get_card(CURSE):
+            agent.deck.add_new(CURSE)
+            print('{} gains a {}!'.format(agent.name, CURSE))
+        else:
+            print('{} cannot gain a {} because there are no more'.format(agent.name, CURSE))
 witch_action.affects_others = True
 WITCH = Card('Witch', CARD_TYPES.ACTION, cost=5, action=witch_action, card_desc='+2 cards. Each other player gains a curse.')
 
