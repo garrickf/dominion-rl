@@ -610,7 +610,7 @@ VASSAL = Card('Vassal', CARD_TYPES.ACTION, cost=3, action=vassal_action, card_de
 def sentry_action(agent, agent_type, phase, table):
     def generator():
         """
-        Look at top 2 cards of deck, trash and/or discard any number of them.
+        +1 card, +1 action. Look at top 2 cards of deck, trash and/or discard any number of them.
         Put the rest back on top in any order.
         """
 
@@ -695,6 +695,47 @@ sentry_action.affects_others = False
 SENTRY = Card('Sentry',  CARD_TYPES.ACTION, cost=5, action=sentry_action, card_desc='+1 card. +1 action. Look at the top 2 cards of your deck. Trash and/or discard any number of them. Put the rest back on top in any order.')
 
 
+def poacher_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        1 card, action, treasure. Discard a card per empty supply pile
+        """
+        agent.extra_treasure += 1
+        agent.num_actions += 1
+        
+        newCards = agent.deck.draw(1)
+        game_log.add_message('{} drew {}'.format(agent.name, card_list_to_string(newCards)))
+        agent.hand += newCards
+
+        num_empty_piles = table.num_empty_piles
+        if num_empty_piles == 0:
+            return
+
+        action_to_idx, cards, action_set = filter_actions(agent.hand, lambda card, i: True)
+        to_discard = []
+        for i in range(num_empty_piles):
+            print(card_list_to_options(cards, only_idxs=action_set, can_escape=False))
+            prompt_str = 'Choose a card to discard.'
+
+            choice = (yield action_set, prompt_str)
+            assert(choice != None)
+
+            to_discard.append(choice)
+            action_set = [a for a in action_set if a != choice]
+
+        discarded_cards = [agent.hand[action_to_idx[i]] for i in to_discard]
+        agent.deck.discard(discarded_cards)
+        agent.hand = [card for i, card in enumerate(agent.hand) if i not in to_discard]
+        if discarded_cards:
+            game_log.add_message('{} discarded {}'.format(agent.name, card_list_to_string(discarded_cards)))
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+poacher_action.affects_others = False
+POACHER = Card('Poacher', CARD_TYPES.ACTION, cost=4, action=poacher_action, card_desc='+1 card. +1 action. +(1). Discard a card per empty supply pile.')
+
+
 KINGDOM_CARDS = [
     CHAPEL, 
     SMITHY, 
@@ -716,4 +757,5 @@ KINGDOM_CARDS = [
     THRONE_ROOM,
     VASSAL,
     SENTRY,
+    POACHER,
 ]

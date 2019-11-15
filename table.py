@@ -50,6 +50,15 @@ class Table:
         return list(self.table.keys())
 
 
+    @property
+    def num_empty_piles(self):
+        """
+        Returns the number of empty piles
+        """
+        empty_piles = [v for v in self.table.values() if v == 0]
+        return len(empty_piles)
+
+
     def can_purchase(self, idx, treasures, card_type_only=None):
         """
         A card is available for purcase if there is more in the pile, and the
