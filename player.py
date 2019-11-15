@@ -3,7 +3,7 @@ from deck import Deck
 from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE, CURSE, GARDENS
 from util import get_integer, get_choice
 
-NUM_TO_DRAW = 5
+NUM_TO_DRAW = 7
 
 class Player:
     def __init__(self, i):
@@ -65,6 +65,34 @@ class Player:
         return [idx for idx, card in enumerate(self.hand) if card.type == CARD_TYPES.ACTION] + [None]
 
 
+    def execute_action(self, action, phase, table, self_initiated=False):
+        """
+        Given some action and table, run the action to completion. Some actions 
+        only induce effects on the Player object; others prompt the player to do
+        something in other to complete the action.
+        """
+        if self_initiated:
+            agent_type = AGENT_TYPES.SELF
+        else:
+            agent_type = AGENT_TYPES.OTHER
+        
+        g = action(self, agent_type, phase, table)
+        if g != None:
+            # The generator must be called once to start the action
+            choices, prompt_str = next(g)
+            while True:
+                try:
+                    """
+                    The action generator returns a set of valid choices. From
+                    those, we prompt the player to enter one, and pass the
+                    choice back to the generator.
+                    """
+                    choice = get_choice(prompt_str, choice_set=choices)
+                    choices, prompt_str = g.send(choice)
+                except:
+                    break
+
+
     def action_phase(self, table):
         """
         During the action phase, a player can play any action card from their
@@ -88,21 +116,8 @@ class Player:
             print('{} played {}\n'.format(self.name, card))
             self.deck.discard([card]) # Place into discard
 
-            g = card.action(self, AGENT_TYPES.SELF, PHASE_TYPES.IMMEDIATE, table)
-            if g != None:
-                # The generator must be called once to start the action
-                choices, prompt_str = next(g)
-                while True:
-                    try:
-                        """
-                        The action generator returns a set of valid choices. From
-                        those, we prompt the player to enter one, and pass the
-                        choice back to the generator.
-                        """
-                        choice = get_choice(prompt_str, choice_set=choices)
-                        choices, prompt_str = g.send(choice)
-                    except:
-                        break
+            # Execute the action
+            self.execute_action(card.action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
             
             if card.action.affects_others:
                 action_cache.append(card.action)

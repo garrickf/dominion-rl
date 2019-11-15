@@ -27,6 +27,9 @@ class Table:
             WITCH: 10,
             GARDENS: 10,
             MINE: 10,
+            # TESTING
+            MONEYLENDER: 10,
+            REMODEL: 10,
         })
 
 
@@ -38,6 +41,14 @@ class Table:
         for i, (card, left) in enumerate(self.table.items()):
             s += '{:>2}. {!s:<28} [{:>2}] {:>5} | {}\n'.format(i, card, left, card.cost, card.description)
         return s
+
+
+    @property
+    def cards(self):
+        """
+        Returns the list of cards on the table.
+        """
+        return list(self.table.keys())
 
 
     def can_purchase(self, idx, treasures, card_type_only=None):

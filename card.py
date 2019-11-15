@@ -201,7 +201,7 @@ def festival_action(agent, agent_type, phase, table):
         agent.num_buys += 1
         agent.extra_treasure += 2
 festival_action.affects_others = False
-FESTIVAL = Card('Festival', CARD_TYPES.ACTION, cost=5, action=festival_action, card_desc='+2 actions. +1 buy. +2 treasure.')
+FESTIVAL = Card('Festival', CARD_TYPES.ACTION, cost=5, action=festival_action, card_desc='+2 actions. +1 buy. +(2)')
 
 
 def council_room_action(agent, agent_type, phase, table):
@@ -237,7 +237,7 @@ def market_action(agent, agent_type, phase, table):
         agent.num_buys += 1
         agent.extra_treasure += 1
 market_action.affects_others = False
-MARKET = Card('Market', CARD_TYPES.ACTION, cost=5, action=market_action, card_desc='+1 card. +1 action. +1 buy. +1 treasure.')
+MARKET = Card('Market', CARD_TYPES.ACTION, cost=5, action=market_action, card_desc='+1 card. +1 action. +1 buy. +(1)')
 
 
 def witch_action(agent, agent_type, phase, table):
@@ -290,7 +290,7 @@ def mine_action(agent, agent_type, phase, table):
         # TODO: can purchase kind of hacky right now, since table order isn't fixed.
         action_to_idx, cards, action_set = filter_actions(TREASURES, lambda card, i: table.can_purchase(i, worth))
         print(card_list_to_options(cards, can_escape=True))
-        prompt_str = 'Gain a treasure costing up to 3 more than what you trashed'
+        prompt_str = 'Gain a treasure costing up to (3) more than what you trashed'
 
         choice = (yield action_set, prompt_str)
 
@@ -307,4 +307,73 @@ def mine_action(agent, agent_type, phase, table):
     else:
         return None
 mine_action.affects_others = False
-MINE = Card('Mine', CARD_TYPES.ACTION, cost=5, action=mine_action, card_desc='You may trash a treasure from your hand. Gain a treasure to your hand costing up to 3 more than it.')
+MINE = Card('Mine', CARD_TYPES.ACTION, cost=5, action=mine_action, card_desc='You may trash a treasure from your hand. Gain a treasure to your hand costing up to (3) more than it.')
+
+
+def moneylender_action(agent, agent_type, phase, table):
+    def generator():
+        all_actions = agent.hand
+        cond = lambda card, i: card == COPPER
+        action_to_idx, cards, action_set = filter_actions(all_actions, cond)
+        
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'Trash a Copper from your hand'
+        choice = (yield action_set, prompt_str)
+
+        if choice == None:
+            return
+
+        card = agent.hand.pop(action_to_idx[choice])
+        agent.deck.trash(card)
+        print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
+        agent.extra_treasure += 3
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+    else:
+        return None
+moneylender_action.affects_others = False
+MONEYLENDER = Card('Moneylender', CARD_TYPES.ACTION, cost=4, action=moneylender_action, card_desc='You may trash a Copper from your hand for +(3)')
+
+
+def remodel_action(agent, agent_type, phase, table):
+    def generator():
+        all_actions = agent.hand
+        cond = lambda card, i: True
+        action_to_idx, cards, action_set = filter_actions(all_actions, cond)
+        
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'Trash a card from your hand'
+        choice = (yield action_set, prompt_str)
+
+        if choice == None:
+            return
+
+        card = agent.hand.pop(action_to_idx[choice])
+        agent.deck.trash(card)
+        print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
+        
+        worth = card.cost + 2
+        action_to_idx, cards, action_set = filter_actions(table.cards, lambda card, i: table.can_purchase(i, worth))
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'Gain a card costing up to ({} + {} = {})'.format(card.cost, 2, worth)
+        choice = (yield action_set, prompt_str)
+
+        if choice == None:
+            return
+
+        card = table.buy_idx(action_to_idx[choice])
+        print('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
+        agent.deck.add_new(card)
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+    else:
+        return None
+remodel_action.affects_others = False
+REMODEL = Card('Remodel', CARD_TYPES.ACTION, cost=4, action=remodel_action, card_desc='Trash a card from your hand. Gain a card costing up to (2) more than it.')
+
+
+
