@@ -6,7 +6,7 @@ from utilities.log import Log
 from colorama import Style
 
 # Set to 7 to debug more easily
-NUM_TO_DRAW = 7
+NUM_TO_DRAW = 5
 game_log = Log()
 
 class Player:

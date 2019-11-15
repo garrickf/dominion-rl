@@ -3,7 +3,7 @@ from collections import OrderedDict as ordereddict
 import numpy as np
 
 # Flip to True to test all cards.
-DEBUG = True
+DEBUG = False
 
 class Table:
     def __init__(self, num_players):
