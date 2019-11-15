@@ -54,8 +54,16 @@ class Deck:
         self.discard_pile += cards
 
 
+    def push(self, card):
+        self.draw_pile = [card] + self.draw_pile
+
+
     def add_new(self, card):
         self.discard_pile.append(card)
+        self.counts[card] += 1
+
+
+    def count(self, card):
         self.counts[card] += 1
 
 

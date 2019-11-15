@@ -78,6 +78,8 @@ DUTCHY = Card('Dutchy', CARD_TYPES.VICTORY, cost=5, victory_points=3)
 ESTATE = Card('Estate', CARD_TYPES.VICTORY, cost=2, victory_points=1)
 GARDENS = Card('Gardens', CARD_TYPES.VICTORY, cost=4, victory_points=None, card_desc='Worth 1 VP per 10 cards you have (round down).')
 
+VICTORY_CARDS = [PROVINCE, DUTCHY, ESTATE, GARDENS]
+
 """
 Treasure cards
 """
@@ -263,6 +265,8 @@ def filter_actions(arr, cond):
     a lambda function accepting a card and an index.
     """
     zipped = [(i, v) for i, v in enumerate(arr) if cond(v, i)]
+    if not zipped: # Empty, no possible actions
+        return [], [], []
     action_to_idx, cards = zip(*zipped)
     action_set = list(range(len(cards)))
 
@@ -287,8 +291,7 @@ def mine_action(agent, agent_type, phase, table):
         print('{} trashed {}'.format(agent.name, card)) # TODO: migrate to player
         worth = card.cost + 3
 
-        # TODO: can purchase kind of hacky right now, since table order isn't fixed.
-        action_to_idx, cards, action_set = filter_actions(TREASURES, lambda card, i: table.can_purchase(i, worth))
+        action_to_idx, cards, action_set = filter_actions(TREASURES, lambda card, i: table.can_purchase_card(card, worth))
         print(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Gain a treasure costing up to (3) more than what you trashed'
 
@@ -376,4 +379,198 @@ remodel_action.affects_others = False
 REMODEL = Card('Remodel', CARD_TYPES.ACTION, cost=4, action=remodel_action, card_desc='Trash a card from your hand. Gain a card costing up to (2) more than it.')
 
 
+def artisan_action(agent, agent_type, phase, table):
+    def generator():
+        worth = 5
+        action_to_idx, cards, action_set = filter_actions(table.cards, lambda card, i: table.can_purchase(i, worth))
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'Gain a card to your hand costing up to (5)'
+        choice = (yield action_set, prompt_str)
 
+        if choice == None:
+            return
+
+        card = table.buy_idx(action_to_idx[choice])
+        print('{} added {} to hand'.format(agent.name, card)) # TODO: migrate to player
+        agent.hand.append(card)
+        agent.deck.count(card)
+
+        all_actions = agent.hand
+        cond = lambda card, i: True
+        action_to_idx, cards, action_set = filter_actions(all_actions, cond)
+        
+        print(card_list_to_options(cards, can_escape=False))
+        prompt_str = 'Put a card from your hand onto your deck'
+        choice = (yield action_set, prompt_str)
+
+        assert(choice != None)
+
+        card = agent.hand.pop(action_to_idx[choice])
+        agent.deck.push(card)
+        print('{} put {} on top of their deck'.format(agent.name, card)) # TODO: migrate to player
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+    else:
+        return None
+artisan_action.affects_others = False
+ARTISAN = Card('Artisan', CARD_TYPES.ACTION, cost=6, action=artisan_action, card_desc='Gain a card to your hand costing up to (5). Put a card from your hand onto your deck.')
+
+
+def merchant_action(agent, agent_type, phase, table):
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        newCards = agent.deck.draw(1)
+        agent.hand += newCards
+        print('You drew {}'.format(card_list_to_string(newCards)))
+        agent.num_actions += 1
+    elif agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.BUY:
+        if SILVER in agent.hand:
+            # Silvers would be autoplayed
+            agent.extra_treasure += 1
+merchant_action.affects_others = False
+MERCHANT = Card('Merchant', CARD_TYPES.ACTION, cost=3, action=merchant_action, card_desc='+1 Card. +1 Action. The first time you play a Silver this turn, +(1).')
+
+
+def bureaucrat_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Other players must reveal a victory card and put it on top of their deck.
+        """
+        agent.display_hand()
+        cond = lambda card, i: card in VICTORY_CARDS
+        action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
+        
+        if not cards:
+            print('{} reveals their hand: {}'.format(agent.name, card_list_to_string(agent.hand)))
+            return
+
+        print(card_list_to_options(cards, can_escape=False))
+        prompt_str = 'Reveal a victory card and put it onto your deck'
+        choice = (yield action_set, prompt_str)
+
+        card = agent.hand.pop(action_to_idx[choice])
+        print('{} reveals {} and puts in onto their deck'.format(agent.name, card))
+        agent.deck.push(card)
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        if table.get_card(SILVER):
+            agent.deck.add_new(SILVER)
+            print('{} gains a {}!'.format(agent.name, SILVER))
+        else:
+            print('{} cannot gain a {} because there are no more'.format(agent.name, SILVER))
+    elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+bureaucrat_action.affects_others = True
+BUREAUCRAT = Card('Bureaucrat', CARD_TYPES.ACTION, cost=4, action=bureaucrat_action, card_desc='Gain a Silver onto your deck. Each other player reveals a Victory card from their hand and puts it onto their deck (or reveals a hand with no Victory cards).')
+
+
+def militia_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Other players must discard down to three cards.
+        """
+        agent.display_hand()
+        cond = lambda card, i: True
+        action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
+        
+        to_remove_idxs = []
+        while len(agent.hand) - len(to_remove_idxs) > 3:
+            print(card_list_to_options(agent.hand, only_idxs=action_set, can_escape=False))
+            prompt_str = 'Choose a card to discard'
+            choice = (yield action_set, prompt_str)
+
+            assert(choice != None)
+            
+            print('{} discarded {}'.format(agent.name, agent.hand[choice]))
+            agent.deck.trash(agent.hand[choice])
+            to_remove_idxs.append(choice)
+            action_set = [i for i in action_set if i != choice]
+        
+        agent.hand = [card for idx, card in enumerate(agent.hand) if idx not in to_remove_idxs]
+        return
+    
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        agent.extra_treasure += 2
+    elif agent_type == AGENT_TYPES.OTHER and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+militia_action.affects_others = True
+MILITIA = Card('Militia', CARD_TYPES.ACTION, cost=4, action=militia_action, card_desc='+(2). Each other player discards down to three cards in hand.')
+
+
+def workshop_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Gain a card costing up to 4
+        """
+        cond = lambda card, i: table.can_purchase_card(card, 4)
+
+        action_to_idx, cards, action_set = filter_actions(table.cards, cond)
+        print(card_list_to_options(cards, can_escape=False))
+        prompt_str = 'Gain a card costing up to (4).'
+
+        choice = (yield action_set, prompt_str)
+        assert(choice != None)
+
+        card = table.buy_idx(action_to_idx[choice])
+        print('{} obtained {}'.format(agent.name, card)) # TODO: migrate to player
+        agent.deck.add_new(card)
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+workshop_action.affects_others = False
+WORKSHOP = Card('Workshop', CARD_TYPES.ACTION, cost=3, action=workshop_action, card_desc='Gain a card costing up to (4).')
+
+
+def throne_room_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        Pick an action card and execute it twice
+        """
+        cond = lambda card, i: card.type == CARD_TYPES.ACTION
+
+        action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
+        action_set += [None] # Optional
+        print(card_list_to_options(cards, can_escape=True))
+        prompt_str = 'You may play an action card from your hand twice.'
+
+        choice = (yield action_set, prompt_str)
+        
+        if(choice == None):
+            return
+
+        card = agent.hand.pop(action_to_idx[choice])
+        agent.deck.discard([card])
+
+        print('{} played {}'.format(agent.name, card)) # TODO: migrate to player
+        agent.throne_room_action = card.action
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+throne_room_action.affects_others = False
+THRONE_ROOM = Card('Throne Room', CARD_TYPES.ACTION, cost=4, action=throne_room_action, card_desc='You may play an action card from your hand twice.')
+
+
+KINGDOM_CARDS = [
+    CHAPEL, 
+    SMITHY, 
+    VILLAGE, 
+    FESTIVAL, 
+    COUNCIL_ROOM, 
+    MARKET, 
+    LABORATORY, 
+    WITCH, 
+    GARDENS, 
+    MINE, 
+    MONEYLENDER, 
+    REMODEL, 
+    ARTISAN, 
+    MERCHANT, 
+    BUREAUCRAT, 
+    MILITIA, 
+    WORKSHOP,
+    THRONE_ROOM,
+]

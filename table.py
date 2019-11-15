@@ -1,11 +1,18 @@
 from card import *
 from collections import OrderedDict as ordereddict
+import numpy as np
 
 class Table:
     def __init__(self, num_players):
         """
         A table is a collection of card piles.
         """
+
+        # Choose 10 cards without replacement from set of all kingdom cards
+        kingdom = np.random.choice(KINGDOM_CARDS, size=10, replace=False)
+        # Debug
+        # for card in kingdom:
+        #     print(card)
 
         # Use a ordered dict to allow indexing with a number
         self.table = ordereddict({
@@ -30,6 +37,12 @@ class Table:
             # TESTING
             MONEYLENDER: 10,
             REMODEL: 10,
+            ARTISAN: 10,
+            MERCHANT: 10,
+            BUREAUCRAT: 10,
+            MILITIA: 10,
+            WORKSHOP: 10,
+            THRONE_ROOM: 10,
         })
 
 
@@ -61,6 +74,15 @@ class Table:
             return False
 
         return card.cost <= treasures and left >= 1
+
+
+    def can_purchase_card(self, card, worth):
+        """
+        A card is available for purcase if there is more in the pile, and the
+        cost is at most the amount of treasures available.
+        """
+        left = self.table[card]
+        return card.cost <= worth and left >= 1
 
 
     def get_purchasable_cards(self, worth, card_type_only=None):

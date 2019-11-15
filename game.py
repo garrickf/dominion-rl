@@ -27,22 +27,33 @@ class Dominion:
         while True:
             player = self.players[self.turn]
             os.system('clear')
-            print(color_box('Player {}\'s turn!'.format(self.turn+1), idx=self.turn+1))
+            print(color_box('{}\'s turn!'.format(player.name), idx=player.player_number))
                                           
             # Action phase
             player.display_state()
-            action_cache = player.action_phase(self.table)
+            self_cache, other_cache = player.action_phase(self.table)
             if self.table.reached_end():
                 break
 
-            for action in action_cache:
+            for action in other_cache:
                 # Apply each action to every other player
                 for other in [p for p in self.players if p != player]:
+                    os.system('clear')
+                    print(color_box('{} is attacked!'.format(other.name), idx=other.player_number))
                     other.execute_action(action, PHASE_TYPES.IMMEDIATE, self.table, self_initiated=False)
             if self.table.reached_end():
                 break
+
+            # Reverting to player if an action affecting other players was played
+            if other_cache:
+                os.system('clear')
+                print(color_box('{} resumes their turn...'.format(player.name), idx=player.player_number))
+                player.display_state()
+                player.display_hand()
             
             # Buy phase
+            for action in self_cache:
+                player.execute_action(action, PHASE_TYPES.BUY, self.table, self_initiated=True)
             player.buy_phase(self.table)
             if self.table.reached_end():
                 break

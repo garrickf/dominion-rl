@@ -21,6 +21,7 @@ class Player:
         self.num_actions = 1
         self.num_buys = 1
         self.extra_treasure = 0
+        self.throne_room_action = None # It's that special
 
 
     def display_hand(self):
@@ -79,9 +80,9 @@ class Player:
         g = action(self, agent_type, phase, table)
         if g != None:
             # The generator must be called once to start the action
-            choices, prompt_str = next(g)
-            while True:
-                try:
+            try:
+                choices, prompt_str = next(g)
+                while True:
                     """
                     The action generator returns a set of valid choices. From
                     those, we prompt the player to enter one, and pass the
@@ -89,8 +90,8 @@ class Player:
                     """
                     choice = get_choice(prompt_str, choice_set=choices)
                     choices, prompt_str = g.send(choice)
-                except:
-                    break
+            except:
+                pass
 
 
     def action_phase(self, table):
@@ -100,7 +101,9 @@ class Player:
         """
         self.display_hand()
 
-        action_cache = []
+        # Cache actions to be applied to other players and self
+        other_cache = []
+        self_cache = []
         while self.num_actions:
             if not self.can_play_action:
                 print('No actions to play.\n')
@@ -108,19 +111,28 @@ class Player:
 
             print('{} action(s) left.'.format(self.num_actions))
             prompt_str = 'Play an action (0-{}) or ENTER to skip'.format(len(self.hand)-1)
-            action = get_choice(prompt_str, choice_set=self.valid_actions)
-            if action == None:
+            action_idx = get_choice(prompt_str, choice_set=self.valid_actions)
+            if action_idx == None:
                 break
 
-            card = self.hand.pop(action)
+            card = self.hand.pop(action_idx)
             print('{} played {}\n'.format(self.name, card))
             self.deck.discard([card]) # Place into discard
 
             # Execute the action
-            self.execute_action(card.action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
+            action = card.action
+            self.execute_action(action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
             
-            if card.action.affects_others:
-                action_cache.append(card.action)
+            if action.affects_others:
+                other_cache.append(action)
+            self_cache.append(action)
+
+            if self.throne_room_action:
+                for i in range(2):
+                    self.execute_action(self.throne_room_action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
+                    if self.throne_room_action.affects_others:
+                        other_cache.append(self.throne_room_action)
+                    self_cache.append(self.throne_room_action)
 
             self.num_actions -= 1
             self.display_hand()
@@ -129,8 +141,8 @@ class Player:
         # Debug: Cards should not disappear without our consent
         assert(self.deck.size == self.deck.draw_pile_size + self.deck.discard_pile_size + len(self.hand))
 
-        # Return action cache to game, so actions can be applied to other players.
-        return action_cache
+        # Return action and action cache to game, so actions can be applied to other players.
+        return self_cache, other_cache
 
 
     def buy_phase(self, table):
@@ -161,6 +173,7 @@ class Player:
         self.extra_treasure = 0
         self.num_actions = 1
         self.num_buys = 1
+        self.throne_room_action = None
 
 
     def draw_cards(self):
