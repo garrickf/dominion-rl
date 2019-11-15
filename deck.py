@@ -76,5 +76,5 @@ class Deck:
         for i, (k, v) in enumerate(self.counts.items()):
             if i % 3 == 0 and i > 0:
                 s += '\n'
-            s += '[{}] {!s:<23}'.format(v, k)
+            s += '[{:>2}] {!s:<23}'.format(v, k)
         return s + '\n'
