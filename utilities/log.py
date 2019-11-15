@@ -10,9 +10,9 @@ class Log:
 
         @property
         def recent(self):
-            NUM_MESSAGES_TO_DISPLAY = 7
+            NUM_MESSAGES_TO_DISPLAY = 11
             recent = self.messages[-NUM_MESSAGES_TO_DISPLAY:]
-            return '\n'.join(recent)
+            return '...\n' + '\n'.join(recent)
 
 
         @property

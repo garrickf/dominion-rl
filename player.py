@@ -26,14 +26,15 @@ class Player:
         self.num_actions = 1
         self.num_buys = 1
         self.extra_treasure = 0
-        self.throne_room_action = None # It's that special
+        self.spare_action = None
+        self.spare_action_plays = 1
 
 
     def display_hand(self):
         s = 'Current hand:\n'
         for idx, card in enumerate(self.hand):
-            s += '{}. {}, '.format(idx, card)
-        print(s[:-2] + '\n')
+            s += '{}. {}\n'.format(idx, card)
+        print(s)
 
 
     def display_state(self):
@@ -127,7 +128,7 @@ class Player:
                 break
 
             card = self.hand.pop(action_idx)
-            game_log.add_message('{} played {}\n'.format(self.name, card))
+            game_log.add_message('{} played {}'.format(self.name, card))
             self.deck.discard([card]) # Place into discard
 
             # Execute the action
@@ -138,16 +139,23 @@ class Player:
                 other_cache.append(action)
             self_cache.append(action)
 
-            if self.throne_room_action:
-                for i in range(2):
-                    self.execute_action(self.throne_room_action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
-                    if self.throne_room_action.affects_others:
-                        other_cache.append(self.throne_room_action)
-                    self_cache.append(self.throne_room_action)
+            # e.g. throne room and vassal can set a spare action
+            while self.spare_action:
+                plays = self.spare_action_plays
+                spare_action = self.spare_action
+
+                # Reset, in case another action sets it back!
+                self.spare_action_plays = 1
+                self.spare_action = None
+                for i in range(plays):
+                    self.execute_action(spare_action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
+                    if spare_action.affects_others:
+                        other_cache.append(spare_action)
+                    self_cache.append(spare_action)
 
             self.num_actions -= 1
             self.display_hand()
-        print('{} concludes action phase\n'.format(self.name))
+        # print('{} concludes action phase\n'.format(self.name))
 
         # Debug: Cards should not disappear without our consent
         assert(self.deck.size == self.deck.draw_pile_size + self.deck.discard_pile_size + len(self.hand))
@@ -176,7 +184,7 @@ class Player:
             pp -= card.cost
             self.num_buys -= 1
             self.deck.add_new(card)
-        print('{} concludes buy phase\n'.format(self.name))
+        # print('{} concludes buy phase\n'.format(self.name))
 
 
     def cleanup_hand(self):
@@ -190,7 +198,7 @@ class Player:
     def draw_cards(self):
         new_hand = self.deck.draw(NUM_TO_DRAW)
         self.hand = new_hand
-        game_log.add_message('{} draws {} cards'.format(self.name, NUM_TO_DRAW))
+        game_log.add_message('{} ends turn, draws {} cards'.format(self.name, NUM_TO_DRAW))
 
         # Debug: Should always start with a full hand
         assert(len(self.hand) == NUM_TO_DRAW)

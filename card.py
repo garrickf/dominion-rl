@@ -564,13 +564,48 @@ def throne_room_action(agent, agent_type, phase, table):
         agent.deck.discard([card])
 
         game_log.add_message('{} played {}'.format(agent.name, card)) # TODO: migrate to player
-        agent.throne_room_action = card.action
+        agent.spare_action = card.action
+        agent.spare_action_plays = 2
         return
 
     if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
         return generator()
 throne_room_action.affects_others = False
 THRONE_ROOM = Card('Throne Room', CARD_TYPES.ACTION, cost=4, action=throne_room_action, card_desc='You may play an action card from your hand twice.')
+
+
+def vassal_action(agent, agent_type, phase, table):
+    def generator():
+        """
+        +2. Discard the top card of the deck. If it's an action, you may play it.
+        """
+        agent.extra_treasure += 2
+
+        card = agent.deck.draw(1)[0]
+        agent.deck.discard([card])
+
+        game_log.add_message('{} discarded {} from the top of their deck'.format(agent.name, card))
+        if card.type != CARD_TYPES.ACTION: 
+            return
+
+        action_set = [0, None]
+        print(card_list_to_options([card], can_escape=True))
+        prompt_str = 'You may play this action card.'
+
+        choice = (yield action_set, prompt_str)
+        
+        if(choice == None):
+            return
+
+        game_log.add_message('{} also played that {}'.format(agent.name, card))
+        agent.spare_action = card.action
+        return
+
+    if agent_type == AGENT_TYPES.SELF and phase == PHASE_TYPES.IMMEDIATE:
+        return generator()
+vassal_action.affects_others = False
+VASSAL = Card('Vassal', CARD_TYPES.ACTION, cost=3, action=vassal_action, card_desc='+(2). Discard the top card of your deck. If it\'s an action, you may play it.')
+
 
 
 KINGDOM_CARDS = [
@@ -592,4 +627,5 @@ KINGDOM_CARDS = [
     MILITIA, 
     WORKSHOP,
     THRONE_ROOM,
+    VASSAL,
 ]
