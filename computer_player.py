@@ -34,7 +34,7 @@ class ComputerPlayer(Player):
 
 		# Variable for card in each position in hand
 		for i in range(len(hand)):
-			
+			key = ("Card at index", i, hand[i].name)
 
 		###### Features about the supply. ######
 		kingdom = table.kingdom
