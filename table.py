@@ -13,10 +13,12 @@ class Table:
 
         # Choose 10 cards without replacement from set of all kingdom cards
         kingdom = np.random.choice(KINGDOM_CARDS, size=10, replace=False)
-        
+
         if DEBUG:
             kingdom = KINGDOM_CARDS
 
+        self.kingdom = kingdom
+        
         # Use a ordered dict to allow indexing with a number
         self.table = ordereddict({
             COPPER: 60 - (num_players * 7),

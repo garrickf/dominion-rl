@@ -17,6 +17,10 @@ class RandomPolicy(Policy):
     def get_next_action(self, action_space, current_state):
         return random.choice(action_space)
 
+class HardCodedPolicy(Policy):
+    def get_next_action(self, action_space, current_state):
+        pass
+
 class QLearningPolicy(Policy):
     # Can play as it learns
     # Save weights after each game (pickle)

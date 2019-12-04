@@ -15,7 +15,6 @@ class Deck:
         self.draw_pile = [ESTATE] * 3 + [COPPER] * 7
         random.shuffle(self.draw_pile)
         self.discard_pile = []
-
         self.counts = defaultdict(int, {ESTATE: 3, COPPER: 7})
 
 
@@ -39,7 +38,7 @@ class Deck:
         self.draw_pile += self.discard_pile
         self.discard_pile = []
 
-
+    # TODO: Modify so that you draw the remainder of the deck before reshuffling
     def draw(self, n):
         # If draw pile is smaller than n, reshuffle
         if len(self.draw_pile) < n: 
@@ -66,7 +65,7 @@ class Deck:
     def count(self, card):
         self.counts[card] += 1
 
-
+    # ISSUE: is this actually removing the card from the deck or only from the counts???
     def trash(self, card):
         self.counts[card] -= 1
 
