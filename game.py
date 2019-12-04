@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from player import Player
+from computer_player import ComputerPlayer
 from table import Table
 from card import AGENT_TYPES, PHASE_TYPES
 from util import color_box
@@ -12,11 +13,11 @@ game_log = Log()
 class Dominion:
     def __init__(self):
         # Create a game instance with two players
-        self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
+        # self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
+        self.players = [Player(1), ComputerPlayer(2)]
         self.turn = 0
         self.table = Table(NUM_PLAYERS)
         # TODO: handle computer instance (with a computer class? computer controls player?)
-
 
     def play(self):
         """

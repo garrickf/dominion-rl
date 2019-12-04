@@ -72,11 +72,13 @@ class Player:
     @property
     def valid_actions(self):
         """
-        Returns a list of valid actions. No action is always valid, though frowned
+        Returns a list of valid actions. Playing no action is always valid, though frowned
         upon.
         """
         return [idx for idx, card in enumerate(self.hand) if card.type == CARD_TYPES.ACTION] + [None]
 
+    def choose(self, choice_set, prompt=""):
+        return get_choice(prompt, choice_set=choice_set)
 
     def execute_action(self, action, phase, table, self_initiated=False):
         """
@@ -100,7 +102,7 @@ class Player:
                     those, we prompt the player to enter one, and pass the
                     choice back to the generator.
                     """
-                    choice = get_choice(prompt_str, choice_set=choices)
+                    choice = self.choose(choices, prompt=prompt_str)
                     choices, prompt_str = g.send(choice)
             except:
                 pass
@@ -123,7 +125,7 @@ class Player:
 
             print('{} action(s) left.'.format(self.num_actions))
             prompt_str = 'Play an action (0-{}) or ENTER to skip'.format(len(self.hand)-1)
-            action_idx = get_choice(prompt_str, choice_set=self.valid_actions)
+            action_idx = self.choose(self.valid_actions, prompt=prompt_str)
             if action_idx == None:
                 break
 
@@ -174,7 +176,7 @@ class Player:
 
             purchasable = table.get_purchasable_cards(pp)
             prompt_str = 'Make a purchase or ENTER to skip'
-            choice = get_choice(prompt_str, choice_set=purchasable + [None])
+            choice = self.choose(purchasable + [None], prompt=prompt_str)
             if choice == None:
                 break
 
