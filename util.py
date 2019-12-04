@@ -1,6 +1,9 @@
 import sys
 from colorama import Fore, Back, Style
 
+def sparseDot(v, w):
+    return sum(v[k] * w[k] for k in set(v.keys()) & set(w.keys()))
+
 def get_integer(prompt):
     typed = input(prompt)
     if typed.isdigit():
