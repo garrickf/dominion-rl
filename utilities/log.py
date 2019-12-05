@@ -26,6 +26,13 @@ class Log:
                 print(m)
             self.messages.append(m)
 
+
+        def clear(self):
+            """
+            Clears entire message queue.
+            """
+            self.messages = []
+
         
         def set_verbose(self, is_verbose):
             """

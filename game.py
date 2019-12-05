@@ -11,7 +11,7 @@ NUM_PLAYERS = 2
 game_log = Log()
 
 class Dominion:
-    def __init__(self, with_players=[]):
+    def __init__(self, with_players=[], silence_output=False):
         class GameInformation():
             def __init__(self):
                 """
@@ -43,6 +43,13 @@ class Dominion:
         self.turns = 0
         self.rounds = 0
 
+        # Clear game log (useful for repeated game instantiations)
+        game_log.clear()
+
+        if silence_output:
+            game_log.set_verbose(False)
+            Console.set_verbose(False)
+
 
     def play(self):
         """
@@ -50,6 +57,8 @@ class Dominion:
         run four phases (action, buy, cleanup, draw). The game could end after
         the action phase (i.e. if a card is obtained) or the buy phase, so the 
         state of the table is checked after both phases.
+
+        Returns the index of the player who won, and the scores array
         """
         game_log.add_message('Starting game of Dominion...')
         while True:
@@ -100,6 +109,7 @@ class Dominion:
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
         game_log.add_message('{} won with a score of {}'.format(self.players[idx].name, scores[idx]))
+        return (idx, scores)
 
 
     # Reset game instance in order to play again.
@@ -109,6 +119,13 @@ class Dominion:
         self.turns = 0
         self.rounds = 0
         self.table = Table(NUM_PLAYERS) # Should update in GameInfo struct too, right?
+
+
+    def get_log(self):
+        """
+        Retrieves the game logs.
+        """
+        return game_log.full
 
 
 def main():
