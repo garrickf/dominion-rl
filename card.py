@@ -2,6 +2,7 @@ from enum import Enum
 from colorama import Fore, Back, Style
 from util import get_integer
 from utilities.log import Log
+from utilities.console import Console
 
 """
 Presents the implementation of the card class, as well as default card instances
@@ -159,7 +160,7 @@ def chapel_action(agent, agent_type, phase, table):
         for i in range(4):
             
             # Prompt agent to make choice from set of discrete choices
-            print(card_list_to_options(agent.hand, only_idxs=choices, can_escape=True))
+            Console.log(card_list_to_options(agent.hand, only_idxs=choices, can_escape=True))
             prompt_str = 'Choose a card to trash ({}/4)'.format(i+1)
             choice = (yield choices, prompt_str)
 
@@ -296,7 +297,7 @@ def mine_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
         action_set += [None]
-        print(card_list_to_options(cards, can_escape=True))
+        Console.log(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Trash a treasure from your hand'
         choice = (yield action_set, prompt_str)
         assert(choice != None)
@@ -308,7 +309,7 @@ def mine_action(agent, agent_type, phase, table):
 
         action_to_idx, cards, action_set = filter_actions(TREASURES, lambda card, i: table.can_purchase_card(card, worth))
         action_set += [None]
-        print(card_list_to_options(cards, can_escape=True))
+        Console.log(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Gain a treasure costing up to (3) more than what you trashed'
 
         choice = (yield action_set, prompt_str)
@@ -334,7 +335,7 @@ def moneylender_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
         action_set += [None]
-        print(card_list_to_options(cards, can_escape=True))
+        Console.log(card_list_to_options(cards, can_escape=True))
         prompt_str = 'Trash a Copper from your hand'
         choice = (yield action_set, prompt_str)
 
@@ -362,7 +363,7 @@ def remodel_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
         action_set += [None] # Optional
-        print(card_list_to_options(cards, can_escape=True))
+        Console.log(card_list_to_options(cards, can_escape=True))
         prompt_str = 'You may trash a card from your hand'
         choice = (yield action_set, prompt_str)
 
@@ -376,7 +377,7 @@ def remodel_action(agent, agent_type, phase, table):
         worth = card.cost + 2
         action_to_idx, cards, action_set = filter_actions(table.cards, lambda card, i: table.can_purchase(i, worth))
         action_set += [None]
-        print(card_list_to_options(cards, can_escape=True, verbose=True))
+        Console.log(card_list_to_options(cards, can_escape=True, verbose=True))
         prompt_str = 'Gain a card costing up to ({} + {} = {})'.format(card.cost, 2, worth)
         choice = (yield action_set, prompt_str)
 
@@ -400,7 +401,7 @@ def artisan_action(agent, agent_type, phase, table):
     def generator():
         worth = 5
         action_to_idx, cards, action_set = filter_actions(table.cards, lambda card, i: table.can_purchase(i, worth))
-        print(card_list_to_options(cards, can_escape=True, verbose=True))
+        Console.log(card_list_to_options(cards, can_escape=True, verbose=True))
         action_set += [None]
         prompt_str = 'Gain a card to your hand costing up to (5)'
         choice = (yield action_set, prompt_str)
@@ -417,7 +418,7 @@ def artisan_action(agent, agent_type, phase, table):
         cond = lambda card, i: True
         action_to_idx, cards, action_set = filter_actions(all_actions, cond)
         
-        print(card_list_to_options(cards, can_escape=False, verbose=True))
+        Console.log(card_list_to_options(cards, can_escape=False, verbose=True))
         prompt_str = 'Put a card from your hand onto your deck'
         choice = (yield action_set, prompt_str)
 
@@ -467,7 +468,7 @@ def bureaucrat_action(agent, agent_type, phase, table):
             game_log.add_message('{} reveals their hand: {}'.format(agent.name, card_list_to_string(agent.hand)))
             return
 
-        print(card_list_to_options(cards, can_escape=False))
+        Console.log(card_list_to_options(cards, can_escape=False))
         prompt_str = 'Reveal a victory card and put it onto your deck'
         choice = (yield action_set, prompt_str)
         
@@ -505,7 +506,7 @@ def militia_action(agent, agent_type, phase, table):
         
         to_remove_idxs = []
         while len(agent.hand) - len(to_remove_idxs) > 3:
-            print(card_list_to_options(agent.hand, only_idxs=action_set, can_escape=False))
+            Console.log(card_list_to_options(agent.hand, only_idxs=action_set, can_escape=False))
             prompt_str = 'Choose a card to discard'
             choice = (yield action_set, prompt_str)
 
@@ -537,7 +538,7 @@ def workshop_action(agent, agent_type, phase, table):
 
         action_to_idx, cards, action_set = filter_actions(table.cards, cond)
         action_set += [None] # Optional
-        print(card_list_to_options(cards, can_escape=True, verbose=True))
+        Console.log(card_list_to_options(cards, can_escape=True, verbose=True))
         prompt_str = 'Gain a card costing up to (4).'
 
         choice = (yield action_set, prompt_str)
@@ -565,7 +566,7 @@ def throne_room_action(agent, agent_type, phase, table):
 
         action_to_idx, cards, action_set = filter_actions(agent.hand, cond)
         action_set += [None] # Optional
-        print(card_list_to_options(cards, can_escape=True))
+        Console.log(card_list_to_options(cards, can_escape=True))
         prompt_str = 'You may play an action card from your hand twice.'
 
         choice = (yield action_set, prompt_str)
@@ -602,7 +603,7 @@ def vassal_action(agent, agent_type, phase, table):
             return
 
         action_set = [0, None]
-        print(card_list_to_options([card], can_escape=True))
+        Console.log(card_list_to_options([card], can_escape=True))
         prompt_str = 'You may play this action card.'
 
         choice = (yield action_set, prompt_str)
@@ -638,7 +639,7 @@ def sentry_action(agent, agent_type, phase, table):
 
         to_trash = []
         while len(action_set) > 0:
-            print(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
+            Console.log(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
             prompt_str = 'Choose a card to trash, ENTER to discard instead.'
 
             all_actions = action_set + [None]
@@ -663,7 +664,7 @@ def sentry_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(watch, lambda card, i: True)
         to_discard = []
         while len(action_set) > 0:
-            print(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
+            Console.log(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
             prompt_str = 'Choose a card to discard, ENTER to place back instead.'
 
             all_actions = action_set + [None]
@@ -687,7 +688,7 @@ def sentry_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(watch, lambda card, i: True)
         order = []
         while len(action_set) > 0:
-            print(card_list_to_options(cards, only_idxs=action_set, can_escape=False))
+            Console.log(card_list_to_options(cards, only_idxs=action_set, can_escape=False))
             prompt_str = 'Pick card to put back on deck.'
 
             choice = (yield action_set, prompt_str)
@@ -727,7 +728,7 @@ def poacher_action(agent, agent_type, phase, table):
         action_to_idx, cards, action_set = filter_actions(agent.hand, lambda card, i: True)
         to_discard = []
         for i in range(num_empty_piles):
-            print(card_list_to_options(cards, only_idxs=action_set, can_escape=False))
+            Console.log(card_list_to_options(cards, only_idxs=action_set, can_escape=False))
             prompt_str = 'Choose a card to discard.'
 
             choice = (yield action_set, prompt_str)
@@ -764,7 +765,7 @@ def library_action(agent, agent_type, phase, table):
             card = newCards[0]
             if card.type == CARD_TYPES.ACTION:
                 action_set = [0, None]
-                print(card_list_to_options([card], can_escape=True))
+                Console.log(card_list_to_options([card], can_escape=True))
                 prompt_str = 'You may skip drawing this action card, discarding it.'
                 choice = (yield action_set, prompt_str)
 
@@ -798,7 +799,7 @@ def harbinger_action(agent, agent_type, phase, table):
         agent.hand += newCards
         
         action_to_idx, cards, action_set = filter_actions(agent.deck.discard_pile, lambda card, i: True)
-        print(card_list_to_options(cards, can_escape=True))
+        Console.log(card_list_to_options(cards, can_escape=True))
         prompt_str = 'You may choose a discarded card to put on top of your deck.'
 
         all_actions = action_set + [None]
@@ -826,7 +827,7 @@ def cellar_action(agent, agent_type, phase, table):
         to_discard = []
         action_to_idx, cards, action_set = filter_actions(agent.hand, lambda card, i: True)
         for i in range(len(agent.hand)):
-            print(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
+            Console.log(card_list_to_options(cards, only_idxs=action_set, can_escape=True))
             prompt_str = 'Discard any card.'
 
             all_actions = action_set + [None]
@@ -877,7 +878,7 @@ def bandit_action(agent, agent_type, phase, table):
             agent.deck.discard(top_two)
             return
 
-        print(card_list_to_options(cards, can_escape=False))
+        Console.log(card_list_to_options(cards, can_escape=False))
         prompt_str = 'Trash a revealed treasure!'
         choice = (yield action_set, prompt_str)
         

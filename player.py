@@ -4,6 +4,7 @@ from card import CARD_TYPES, AGENT_TYPES, PHASE_TYPES, ESTATE, DUTCHY, PROVINCE,
 from util import get_integer, get_choice, colorize
 from utilities.log import Log
 from colorama import Style
+from utilities.console import Console
 
 # Set to 7 to debug more easily
 NUM_TO_DRAW = 5
@@ -46,12 +47,12 @@ class Player:
         s = 'Current hand:\n'
         for idx, card in enumerate(self.hand):
             s += '{}. {}\n'.format(idx, card)
-        print(s)
+        Console.log(s)
 
 
     def display_state(self):
-        print('{}Game Log\n{}{}\n> Playing!\n'.format(Style.DIM, game_log.recent, Style.RESET_ALL))
-        print(self.deck)
+        Console.log('{}Game Log\n{}{}\n> Playing!\n'.format(Style.DIM, game_log.recent, Style.RESET_ALL))
+        Console.log(self.deck)
 
 
     @property
@@ -135,10 +136,10 @@ class Player:
         self_cache = []
         while self.num_actions:
             if not self.can_play_action:
-                print('No actions to play.\n')
+                Console.log('No actions to play.\n')
                 break
 
-            print('{} action(s) left.'.format(self.num_actions))
+            Console.log('{} action(s) left.'.format(self.num_actions))
             prompt_str = 'Play an action (0-{}) or ENTER to skip'.format(len(self.hand)-1)
             action_idx = self.choose(self.valid_actions, prompt=prompt_str)
             if action_idx == None:
@@ -172,7 +173,7 @@ class Player:
 
             self.num_actions -= 1
             self.display_hand()
-        # print('{} concludes action phase\n'.format(self.name))
+        # Console.log('{} concludes action phase\n'.format(self.name))
 
         # Debug: Cards should not disappear without our consent
         assert(self.deck.size == self.deck.draw_pile_size + self.deck.discard_pile_size + len(self.hand))
@@ -186,9 +187,9 @@ class Player:
         pp = self.purchasing_power + self.extra_treasure
         extra = ' + extra' if self.extra_treasure else ''
         while self.num_buys:
-            print('Value of treasures{}: {}, buys remaining: {}'.format(extra, pp, self.num_buys))
-            print('On the table for purchase:')
-            print(table)
+            Console.log('Value of treasures{}: {}, buys remaining: {}'.format(extra, pp, self.num_buys))
+            Console.log('On the table for purchase:')
+            Console.log(table)
 
             purchasable = table.get_purchasable_cards(pp)
             prompt_str = 'Make a purchase or ENTER to skip'
@@ -202,7 +203,7 @@ class Player:
             pp -= card.cost
             self.num_buys -= 1
             self.deck.add_new(card)
-        # print('{} concludes buy phase\n'.format(self.name))
+        # Console.log('{} concludes buy phase\n'.format(self.name))
 
 
     def cleanup_hand(self):

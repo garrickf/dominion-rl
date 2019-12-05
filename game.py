@@ -1,11 +1,11 @@
 import numpy as np
-import os
 from player import Player
 from computer_player import ComputerPlayer
 from table import Table
 from card import AGENT_TYPES, PHASE_TYPES
 from util import color_box
 from utilities.log import Log
+from utilities.console import Console
 
 NUM_PLAYERS = 2
 game_log = Log()
@@ -54,8 +54,8 @@ class Dominion:
         game_log.add_message('Starting game of Dominion...')
         while True:
             player = self.players[self.whose_turn]
-            os.system('clear')
-            print(color_box('{}\'s turn!'.format(player.raw_name), idx=player.player_number))
+            Console.clear()
+            Console.log(color_box('{}\'s turn!'.format(player.raw_name), idx=player.player_number))
             game_log.add_message('{}\'s turn!'.format(player.name), suppress_output=True)
 
             # Action phase
@@ -67,16 +67,16 @@ class Dominion:
             for action in other_cache:
                 # Apply each action to every other player
                 for other in [p for p in self.players if p != player]:
-                    os.system('clear')
-                    print(color_box('{} is attacked!'.format(other.raw_name), idx=other.player_number))
+                    Console.clear()
+                    Console.log(color_box('{} is attacked!'.format(other.raw_name), idx=other.player_number))
                     other.execute_action(action, PHASE_TYPES.IMMEDIATE, self_initiated=False)
             if self.table.reached_end():
                 break
 
             # Reverting to player if an action affecting other players was played
             if other_cache:
-                os.system('clear')
-                print(color_box('{} resumes their turn...'.format(player.raw_name), idx=player.player_number))
+                Console.clear()
+                Console.log(color_box('{} resumes their turn...'.format(player.raw_name), idx=player.player_number))
                 player.display_state()
                 player.display_hand()
             

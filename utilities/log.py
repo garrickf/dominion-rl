@@ -6,6 +6,7 @@ class Log:
     class __Log:
         def __init__(self):
             self.messages = []
+            self.verbose = True
 
 
         @property
@@ -21,9 +22,17 @@ class Log:
 
 
         def add_message(self, m, suppress_output=False):
-            if not suppress_output:
+            if not suppress_output and self.verbose:
                 print(m)
             self.messages.append(m)
+
+        
+        def set_verbose(self, is_verbose):
+            """
+            Sets verbosity of logger. If False (silent), messages sent to the log
+            are not printed to stdout.
+            """
+            self.verbose = is_verbose
         
         
         def __str__(self):
