@@ -10,7 +10,7 @@ NUM_TO_DRAW = 5
 game_log = Log()
 
 class Player:
-    def __init__(self, i):
+    def __init__(self, i, game_info):
         """
         Every player has an active Hand and a Deck, divided between a draw pile
         and a discard pile.
@@ -28,6 +28,8 @@ class Player:
         self.extra_treasure = 0
         self.spare_action = None
         self.spare_action_plays = 1
+
+        self.game = game_info
 
 
     def display_hand(self):
@@ -80,12 +82,14 @@ class Player:
     def choose(self, choice_set, prompt=""):
         return get_choice(prompt, choice_set=choice_set)
 
-    def execute_action(self, action, phase, table, self_initiated=False):
+    def execute_action(self, action, phase, self_initiated=False):
         """
         Given some action and table, run the action to completion. Some actions 
         only induce effects on the Player object; others prompt the player to do
         something in other to complete the action.
         """
+        table = self.game.table
+
         if self_initiated:
             agent_type = AGENT_TYPES.SELF
         else:
@@ -108,11 +112,12 @@ class Player:
                 pass
 
 
-    def action_phase(self, table):
+    def action_phase(self):
         """
         During the action phase, a player can play any action card from their
         hand.
         """
+        table = self.game.table
         self.display_hand()
 
         # Cache actions to be applied to other players and self
@@ -135,7 +140,7 @@ class Player:
 
             # Execute the action
             action = card.action
-            self.execute_action(action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
+            self.execute_action(action, PHASE_TYPES.IMMEDIATE, self_initiated=True)
             
             if action.affects_others:
                 other_cache.append(action)
@@ -150,7 +155,7 @@ class Player:
                 self.spare_action_plays = 1
                 self.spare_action = None
                 for i in range(plays):
-                    self.execute_action(spare_action, PHASE_TYPES.IMMEDIATE, table, self_initiated=True)
+                    self.execute_action(spare_action, PHASE_TYPES.IMMEDIATE, self_initiated=True)
                     if spare_action.affects_others:
                         other_cache.append(spare_action)
                     self_cache.append(spare_action)
@@ -166,7 +171,8 @@ class Player:
         return self_cache, other_cache
 
 
-    def buy_phase(self, table):
+    def buy_phase(self):
+        table = self.game.table
         pp = self.purchasing_power + self.extra_treasure
         extra = ' + extra' if self.extra_treasure else ''
         while self.num_buys:

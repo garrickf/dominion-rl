@@ -12,12 +12,25 @@ game_log = Log()
 
 class Dominion:
     def __init__(self):
+        class GameInformation():
+            def __init__(self):
+                """
+                Inner class encapsulates the game information and exposes those
+                properties to Player objects. Allows Players to get shared state
+                information about the game.
+                """
+                self.table = Table(NUM_PLAYERS)
+        self.game_info = GameInformation()
+        self.table = self.game_info.table # Convenience
+
         # Create a game instance with two players
-        # self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
-        self.players = [Player(1), ComputerPlayer(2)]
+        # self.players = [Player(i+1) for i in range(NUM_PLAYERS)] # Two humans
+        self.players = [
+            Player(1, self.game_info), 
+            ComputerPlayer(2, self.game_info)
+        ] # One human, one computer
         self.turn = 0
-        self.table = Table(NUM_PLAYERS)
-        # TODO: handle computer instance (with a computer class? computer controls player?)
+
 
     def play(self):
         """
@@ -35,7 +48,7 @@ class Dominion:
 
             # Action phase
             player.display_state()
-            self_cache, other_cache = player.action_phase(self.table)
+            self_cache, other_cache = player.action_phase()
             if self.table.reached_end():
                 break
 
@@ -44,7 +57,7 @@ class Dominion:
                 for other in [p for p in self.players if p != player]:
                     os.system('clear')
                     print(color_box('{} is attacked!'.format(other.raw_name), idx=other.player_number))
-                    other.execute_action(action, PHASE_TYPES.IMMEDIATE, self.table, self_initiated=False)
+                    other.execute_action(action, PHASE_TYPES.IMMEDIATE, self_initiated=False)
             if self.table.reached_end():
                 break
 
@@ -57,8 +70,8 @@ class Dominion:
             
             # Buy phase
             for action in self_cache:
-                player.execute_action(action, PHASE_TYPES.BUY, self.table, self_initiated=True)
-            player.buy_phase(self.table)
+                player.execute_action(action, PHASE_TYPES.BUY, self_initiated=True)
+            player.buy_phase()
             if self.table.reached_end():
                 break
 
@@ -74,11 +87,12 @@ class Dominion:
         game_log.add_message('{} won with a score of {}'.format(self.players[idx].name, scores[idx]))
 
 
-    # TODO: reset game instance in order to play again.
+    # Reset game instance in order to play again.
     def reset(self):
         self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
         self.turn = 0
-        self.table = Table(NUM_PLAYERS)
+        self.table = Table(NUM_PLAYERS) # Should update in GameInfo struct too, right?
 
+# Testing code (play a game!)
 dominion = Dominion()
 dominion.play()

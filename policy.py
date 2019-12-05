@@ -48,7 +48,7 @@ class QLearningPolicy(Policy):
     def updateWeights(self, state, action, reward, newState):
         # check if 'state' is terminal, if so, no q-update
         estimate = self.getQ(state, action)
-        observation = 
+        # observation = 
         # 𝑄(𝑠,𝑎)←𝑄(𝑠,𝑎)+𝛼[𝑟+𝛾𝑄(𝑠′,𝑎′)−𝑄(𝑠,𝑎)]
         # θ ← θ + α(rt +γmaxθ⊤β(st+1,a)−θ⊤β(st,at))β(st,at)
 
@@ -67,9 +67,9 @@ class QLearningPolicy(Policy):
     def get_next_action(self, action_space, raw_state):
         return random.choice(action_space)
 
-qlp = QLearningPolicy()
-print(qlp.weights)
-qlp.weights = {"Hello":49}
-qlp.saveWeights()
-qlp2 = QLearningPolicy()
-print(qlp2.weights)
+# qlp = QLearningPolicy()
+# print(qlp.weights)
+# qlp.weights = {"Hello":49}
+# qlp.saveWeights()
+# qlp2 = QLearningPolicy()
+# print(qlp2.weights)
