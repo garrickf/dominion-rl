@@ -206,10 +206,11 @@ class Player:
     def draw_cards(self):
         new_hand = self.deck.draw(NUM_TO_DRAW)
         self.hand = new_hand
-        game_log.add_message('{} ends turn, draws {} cards'.format(self.name, NUM_TO_DRAW))
+        game_log.add_message('{} ends turn, draws {} cards'.format(self.name, len(self.hand)))
 
-        # Debug: Should always start with a full hand
-        assert(len(self.hand) == NUM_TO_DRAW)
+        # Debug: Should always start with a full hand; or doesn't have enough cards
+        # for a full hand
+        assert(len(self.hand) == NUM_TO_DRAW or self.deck.size < NUM_TO_DRAW)
 
 
     def compute_score(self):
