@@ -5,6 +5,7 @@ import argparse
 import datetime
 import os
 import shutil
+import time         # For timing training
 
 from policy import QLearningPolicy, RandomPolicy
 from computer_player import ComputerPlayer
@@ -176,12 +177,15 @@ def run_experiment(settings):
     # policy = QLearningPolicy() # TODO: fix QL policy and uncomment
     policy = RandomPolicy()
 
+    elapsed = lambda tick, tock: time.strftime('%H:%M:%S', time.gmtime(tock - tick))
+
     def test_policy(train_iter):
         """
         Helper to run_experiment that computes the win rate of the current policy
         against another computer opponent.
         """
         wins = 0
+        tick = time.time()
         for i in range(testiters):
             # Play against a random policy opponent
             players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())]
@@ -194,18 +198,20 @@ def run_experiment(settings):
             else:
                 write_game_log(path, game.get_log(), train_iter, 'lose')
             
-        print('(test_policy) {}% win rate'.format(wins / testiters * 100))
+        tock = time.time()
+        print('(test_policy) {}% win rate (eval in: {})'.format(wins / testiters * 100, elapsed(tick, tock)))
         return wins / testiters
         
-
+    tick = time.time()
     for i in range(niters):
         # Create and simulate a game
         players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())] # TODO: player could go first or second
-        game = Dominion(with_players=players, silence_output=True)
+        game = Dominion(with_players=players, silence_output=True)        
 
         winner_idx, scores = game.play()
+        tock = time.time()
         # print(game.get_log())
-        print(winner_idx, scores)
+        print('Iter: {}, winner: {}, scores: {}, {} elapsed'.format(i, winner_idx, scores, elapsed(tick, tock)))
 
         if ((i + 1) % test_every == 0):
             test_policy(i)
