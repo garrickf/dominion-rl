@@ -6,6 +6,10 @@ import datetime
 import os
 import shutil
 
+from policy import QLearningPolicy, RandomPolicy
+from computer_player import ComputerPlayer
+from game import Dominion
+
 CWD = os.getcwd()
 
 def namespace(experiment_name):
@@ -23,8 +27,8 @@ def manual_cmd_str(name, desc, n_iters, test_every):
     Returns a string representation of the manual command to run an experiment
     with given parameters.
     """
-    format_str = 'python learn_dominion.py {}{} --niters {} --cache {}'
-    comment = '-m "{}"'.format(desc) if desc else ''
+    format_str = 'python learn_dominion.py {}{} --niters {} --testevery {}'
+    comment = ' -m "{}"'.format(desc) if desc else ''
     return format_str.format(name, comment, n_iters, test_every)
 
 
@@ -47,13 +51,28 @@ def write_metafile(dir, settings):
         f.close()
 
 
+def write_game_log(dir, game_log, iter, state):
+    """
+    Writes a game log, indexed by the maturity (in iters) of the policy and the 
+    string state (win or lose). Useful to see deveopment of strategies.
+    """
+    filename = os.path.join(dir, 'game_{}_iter{}.txt'.format(state, iter))
+    if os.path.exists(filename): return # Already wrote one!
+    with open(filename, 'w') as f:
+        f.write(game_log)
+        f.close()
+
+
 def parse_args():
     """
     Parse command line arguments.
     """
     parser = argparse.ArgumentParser(description='Run Dominon learning experiment.')
+    parser.add_argument('name', help='experiment name')
+    parser.add_argument('-m, --message', default='', dest='message', help='comments on experiment/description')
     parser.add_argument('-i', '--interactive', action='store_true', help='setup experiment in interactive mode')
-    # parser.add_argument('--infile', '-i', default=DEFAULT_FILENAME, help='Name of data infile.')
+    parser.add_argument('--niters', type=int, default=100, help='number of iterations to train for')
+    parser.add_argument('--testevery', type=int, default=10, help='how often to test the policy')
     # parser.add_argument('--experiment', '-e', default=0, type=int, help='Experiment number.')
     # parser.add_argument('--test', '-t', action='store_true', help='Run test set (default: False).')
     # parser.add_argument('--save_weights', '-s', action='store_true', help='Save weights (default: False).')
@@ -147,24 +166,81 @@ def run_experiment(settings):
     """
     Runs the specified experiment.
     """
-    pass
+    niters = settings['niters']
+    test_every = settings['testevery']
+    path = settings['path']
+    testiters = 100
+    # TODO: add verbose, cache every (?), log games on test (?), discount (?)
+
+    # Create QLearningPolicy
+    # policy = QLearningPolicy() # TODO: fix QL policy and uncomment
+    policy = RandomPolicy()
+
+    def test_policy(train_iter):
+        """
+        Helper to run_experiment that computes the win rate of the current policy
+        against another computer opponent.
+        """
+        wins = 0
+        for i in range(testiters):
+            # Play against a random policy opponent
+            players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())]
+            game = Dominion(with_players=players, silence_output=True)
+            winner_idx, scores = game.play()
+            # print(winner_idx, scores)
+            if winner_idx == 0:
+                wins += 1
+                write_game_log(path, game.get_log(), train_iter, 'win')
+            else:
+                write_game_log(path, game.get_log(), train_iter, 'lose')
+            
+        print('(test_policy) {}% win rate'.format(wins / testiters * 100))
+        return wins / testiters
+        
+
+    for i in range(niters):
+        # Create and simulate a game
+        players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())] # TODO: player could go first or second
+        game = Dominion(with_players=players, silence_output=True)
+
+        winner_idx, scores = game.play()
+        # print(game.get_log())
+        print(winner_idx, scores)
+
+        if ((i + 1) % test_every == 0):
+            test_policy(i)
 
 
 def main():
     args = parse_args()
-    # TODO: allow CLI/non-interactive mode
-    if args.interactive or True: 
+    if args.interactive: 
         settings = prompt_settings()
     else:
-        # TODO: extract settings and confirm user wants them, otherwise abort
-        pass
+        # Extract settings from args
+        path = namespace(args.name)
+        settings = {
+            'name': args.name,
+            'desc': args.message,
+            'path': path,
+            'niters': args.niters,
+            'testevery': args.testevery,
+        }
+
+        if os.path.exists(path) and os.path.isdir(path):
+            print('Warning: directory "{}" already exists and will be overwritten.'.format(path))
+
+            if(get_yes_or_no('OK?')):
+                shutil.rmtree(path) # Remove original directory
+            else:
+                print('Aborting.')
+                exit()
     
     # Make experiment directory and metafile
     path = settings['path']
     os.mkdir(path)
     write_metafile(path, settings)
 
-    # TODO: run experiment given settings
+    # Run experiment given settings
     run_experiment(settings)
 
 
