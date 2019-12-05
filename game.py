@@ -11,7 +11,7 @@ NUM_PLAYERS = 2
 game_log = Log()
 
 class Dominion:
-    def __init__(self):
+    def __init__(self, with_players=[]):
         class GameInformation():
             def __init__(self):
                 """
@@ -25,12 +25,17 @@ class Dominion:
         self.game_info = GameInformation()
         self.table = self.game_info.table # Convenience
 
-        # Create a game instance with two players
-        # self.players = [Player(i+1) for i in range(NUM_PLAYERS)] # Two humans
-        self.players = [
-            Player(1, self.game_info), 
-            ComputerPlayer(2, self.game_info)
-        ] # One human, one computer
+        if with_players:
+            for player in with_players:
+                player.game_info = self.game_info # Add game information
+            self.players = with_players
+        else:
+            # Create a game instance with two players
+            # self.players = [Player(i+1) for i in range(NUM_PLAYERS)] # Two humans
+            self.players = [
+                Player(1, self.game_info), 
+                ComputerPlayer(2, self.game_info)
+            ] # One human, one computer
 
         self.game_info.players = self.players
 
@@ -105,6 +110,12 @@ class Dominion:
         self.rounds = 0
         self.table = Table(NUM_PLAYERS) # Should update in GameInfo struct too, right?
 
-# Testing code (play a game!)
-dominion = Dominion()
-dominion.play()
+
+def main():
+    # Testing code (play a game!)
+    dominion = Dominion()
+    dominion.play()
+
+
+if __name__ == '__main__':
+    main()

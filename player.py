@@ -10,7 +10,7 @@ NUM_TO_DRAW = 5
 game_log = Log()
 
 class Player:
-    def __init__(self, i, game_info):
+    def __init__(self, i, game_info={}):
         """
         Every player has an active Hand and a Deck, divided between a draw pile
         and a discard pile.
@@ -29,6 +29,16 @@ class Player:
         self.spare_action = None
         self.spare_action_plays = 1
 
+        self.game = game_info
+
+
+    @property
+    def game_info(self):
+        return self.game
+
+
+    @game_info.setter
+    def game_info(self, game_info):
         self.game = game_info
 
 

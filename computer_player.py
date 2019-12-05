@@ -5,10 +5,10 @@ from policy import FixedPolicy, RandomPolicy
 from player import Player
 
 class ComputerPlayer(Player):
-    def __init__(self, i, game_info):
+    def __init__(self, i, game_info={}, policy=RandomPolicy()):
         super().__init__(i, game_info) # Call parent constructor
         self.type = 'Computer'
-        self.policy = RandomPolicy()
+        self.policy = policy
 
 
     def extract_raw_state(self):
