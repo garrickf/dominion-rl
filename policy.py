@@ -27,32 +27,40 @@ class HardCodedPolicy(Policy):
 class QLearningPolicy(Policy):
     # Can play as it learns
     # Save weights after each game (pickle)
-    def __init__(self, featureExtractor):
+    def __init__(self, featureExtractor, discount=0.95):
         self.weights = defaultdict(float)
         self.FILENAME = "WEIGHTS"
         self.featureExtractor = featureExtractor
+        self.discount = discount
+        self.numIters = 0
         
         # If pickle exists, load it in.
         try:
             infile = open(self.FILENAME, "rb")
-            self.weights = defaultdict(float, pickle.load(infile))
+            (weights, iters) = defaultdict(float, pickle.load(infile))
+            self.weights, self.numIters = weights, iters
             infile.close()
         except IOError:
             print("No old weights to load in.")
             
     #TODO: IMPLEMENT QLEARNING OR SARSA
     #TODO: HANDLE TERMINAL STATE SOMEHOW
-    def updateWeights(self):
-        pass
+    def updateWeights(self, state, action, reward, newState):
+        # check if 'state' is terminal, if so, no q-update
+        estimate = self.getQ(state, action)
+        observation = 
+        # 𝑄(𝑠,𝑎)←𝑄(𝑠,𝑎)+𝛼[𝑟+𝛾𝑄(𝑠′,𝑎′)−𝑄(𝑠,𝑎)]
+        # θ ← θ + α(rt +γmaxθ⊤β(st+1,a)−θ⊤β(st,at))β(st,at)
 
     def getQ(self, state, action):
+        # return 0 if state is terminal
         feature_vec = self.featureExtractor(state, action)
         return sparseDot(feature_vec, self.weights)
 
 
     def saveWeights(self):
         outfile = open(self.FILENAME,'wb')
-        pickle.dump(dict(self.weights), outfile)
+        pickle.dump((dict(self.weights), self.numIters), outfile)
         outfile.close()
 
 
