@@ -942,3 +942,12 @@ KINGDOM_CARDS = [
     BANDIT,
     MOAT,
 ]
+
+ALL_CARDS = VICTORY_CARDS + TREASURES + [CURSE] + KINGDOM_CARDS
+CARD_TO_IDX = {card: idx for idx, card in enumerate(ALL_CARDS)}
+def get_card_id(card):
+    """
+    Given a card, return a unique index for it that can be used for feature 
+    extraction.
+    """
+    return CARD_TO_IDX[card]
