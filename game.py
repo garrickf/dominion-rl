@@ -20,6 +20,8 @@ class Dominion:
                 information about the game.
                 """
                 self.table = Table(NUM_PLAYERS)
+                self.players = []
+
         self.game_info = GameInformation()
         self.table = self.game_info.table # Convenience
 
@@ -29,7 +31,12 @@ class Dominion:
             Player(1, self.game_info), 
             ComputerPlayer(2, self.game_info)
         ] # One human, one computer
-        self.turn = 0
+
+        self.game_info.players = self.players
+
+        self.whose_turn = 0
+        self.turns = 0
+        self.rounds = 0
 
 
     def play(self):
@@ -41,7 +48,7 @@ class Dominion:
         """
         game_log.add_message('Starting game of Dominion...')
         while True:
-            player = self.players[self.turn]
+            player = self.players[self.whose_turn]
             os.system('clear')
             print(color_box('{}\'s turn!'.format(player.raw_name), idx=player.player_number))
             game_log.add_message('{}\'s turn!'.format(player.name), suppress_output=True)
@@ -80,7 +87,10 @@ class Dominion:
             # Draw phase
             player.draw_cards()
 
-            self.turn = (self.turn + 1) % len(self.players)
+            self.turns += 1
+            if self.turns % len(self.players) == 0:
+                self.rounds += 1
+            self.whose_turn = self.turns % len(self.players)
 
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
@@ -90,7 +100,9 @@ class Dominion:
     # Reset game instance in order to play again.
     def reset(self):
         self.players = [Player(i+1) for i in range(NUM_PLAYERS)]
-        self.turn = 0
+        self.whose_turn = 0
+        self.turns = 0
+        self.rounds = 0
         self.table = Table(NUM_PLAYERS) # Should update in GameInfo struct too, right?
 
 # Testing code (play a game!)

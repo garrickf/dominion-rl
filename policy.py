@@ -1,38 +1,54 @@
 """
 A policy must implement:
 
-get_next_action(action_space, current_state)
+- get_next_action(action_space, current_state)
+- a train flag to alter actions that are chosen in get_next_action. This is 
+  useful if we are training and need to explore randomly, versus maximizing
+  reward.
 """
+import numpy as np
 import random
 import pickle
 from collections import defaultdict
 from util import sparseDot
 
 class Policy:
+    def __init__(self):
+        self.train = True
+
+
     def get_next_action(self, action_space, current_state):
         pass
+
+
+    def set_train(self, is_training):
+        self.train = is_training
+
 
 class FixedPolicy(Policy):
     def get_next_action(self, action_space, current_state):
         return action_space[0]
 
+
 class RandomPolicy(Policy):
     def get_next_action(self, action_space, current_state):
         return random.choice(action_space)
 
+
 class HardCodedPolicy(Policy):
     def get_next_action(self, action_space, current_state):
-        pass
+        pass # TODO: make a hard coded policy
+
 
 class QLearningPolicy(Policy):
     # Can play as it learns
     # Save weights after each game (pickle)
     # Can only update weights of PREVIOUS thing AFTER this phase
     #Computer extracts raw state, we extract FEATURES here.
-    def __init__(self, featureExtractor, discount=0.95):
+    def __init__(self, discount=0.95):
+        super().__init__() # Call parent constructor
         self.weights = defaultdict(float)
         self.FILENAME = "WEIGHTS"
-        self.featureExtractor = featureExtractor
         self.discount = discount
         self.numIters = 0
         
@@ -44,7 +60,25 @@ class QLearningPolicy(Policy):
             infile.close()
         except IOError:
             print("No old weights to load in.")
-    def featureExtractor():
+
+        # TODO: Need to keep track of old state (s), action (a) and old reward (r), 
+        # so newly observed state (sp) can be used in update
+    
+
+    def extract_features(raw_state, action): # TODO: include action name
+        """
+        When given the raw state by the computer player, extract relevant features
+        and return a one-dimensional vector with n components, where n is the number
+        of features. This will be provided as input to the QLearning algorithm.
+        """
+
+        # Unpack entries from raw_state
+        table = raw_state['table']
+        players = raw_state['players']
+        # TODO: add whose turn, number of rounds so far, current player's deck n hand...
+
+        # TODO: dbl-check and revise code below...
+
         ###### Features about the player. ######
         hand, draw_pile, discard_pile = (player.hand, 
             player.deck.draw_pile, player.deck.discard_pile)
@@ -103,7 +137,18 @@ class QLearningPolicy(Policy):
 
 
     def get_next_action(self, action_space, raw_state):
-        return random.choice(action_space)
+        """
+        If in training mode, get_next_action follows a certain policy. Otherwise,
+        it plays hard with the weights it has learned over time.
+        """
+        if self.train:
+            return random.choice(action_space)
+        else:
+            #TODO: use theta and extract features to choose action. Sketched below:
+            features = [extract_features(raw_state, action) for action in action_space]
+            Q_vals = [sparseDot(f, self.weights) for f in features]
+            best_action = action_space[np.argmax(Q_vals)]
+            return best_action
 
 # qlp = QLearningPolicy()
 # print(qlp.weights)
