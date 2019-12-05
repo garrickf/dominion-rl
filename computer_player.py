@@ -25,5 +25,24 @@ class ComputerPlayer(Player):
 
 
     def choose(self, choice_set, **kwargs): # TODO: choose needs kwargs fleshed out
+        reward = self.get_reward()
         raw_state = self.extract_raw_state()
-        return self.policy.get_next_action(choice_set, raw_state)
+        return self.policy.get_next_action(choice_set, raw_state, reward=reward)
+
+
+    def reflect(self):
+        reward = self.get_reward()
+        raw_state = self.extract_raw_state()
+        self.policy.get_next_action([None], raw_state, reward=reward) # Only one action: we won
+        # print(self.policy.get_weights())
+
+
+    # TODO: make a player function that experiences reward, and feed that to the computer player
+    def get_reward(self):
+        reward = 0
+        if self.game.over and self.player_number == self.game.winning_player_number:
+            reward = 100
+        
+        # TODO: other heuristic rewards can be added here
+
+        return reward

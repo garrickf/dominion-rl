@@ -21,6 +21,8 @@ class Dominion:
                 """
                 self.table = Table(NUM_PLAYERS)
                 self.players = []
+                self.winning_player_number = None
+                self.over = False
 
         self.game_info = GameInformation()
         self.table = self.game_info.table # Convenience
@@ -109,6 +111,13 @@ class Dominion:
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
         game_log.add_message('{} won with a score of {}'.format(self.players[idx].name, scores[idx]))
+        
+        self.game_info.over = True
+        self.game_info.winning_player_number = idx + 1
+
+        for player in self.players:
+            player.reflect() # End of game reflection/terminal state
+
         return (idx, scores)
 
 

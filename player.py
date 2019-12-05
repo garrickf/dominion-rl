@@ -93,6 +93,9 @@ class Player:
     def choose(self, choice_set, prompt=""):
         return get_choice(prompt, choice_set=choice_set)
 
+    def reflect(self):
+        pass # This is a stub used by the ComputerPlayer to reflect on its experiences
+
     def execute_action(self, action, phase, self_initiated=False):
         """
         Given some action and table, run the action to completion. Some actions 

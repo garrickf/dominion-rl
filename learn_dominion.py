@@ -6,6 +6,7 @@ import datetime
 import os
 import shutil
 import time         # For timing training
+import pickle
 
 from util import strip_style
 from policy import QLearningPolicy, RandomPolicy
@@ -62,6 +63,16 @@ def write_game_log(dir, game_log, iter, state):
     if os.path.exists(filename): return # Already wrote one!
     with open(filename, 'w') as f:
         f.write(strip_style(game_log))
+        f.close()
+
+
+def dump_weights(dir, weights, iter):
+    """
+    Dumps a pickle of the weights (from a policy).
+    """
+    filename = os.path.join(dir, 'weights_iter{}.pickle'.format(iter))
+    with open(filename, 'wb') as f:
+        pickle.dump({'weights': weights}, f)
         f.close()
 
 
@@ -161,7 +172,7 @@ def prompt_settings():
         'niters': iters,
         'testevery': test_every,
     }
-    # TODO: verbosity, save game logs (?), ...
+    # TODO: verbosity, save game logs (?), discount factor ...
 
 
 def run_experiment(settings):
@@ -175,8 +186,8 @@ def run_experiment(settings):
     # TODO: add verbose, cache every (?), log games on test (?), discount (?)
 
     # Create QLearningPolicy
-    # policy = QLearningPolicy() # TODO: fix QL policy and uncomment
-    policy = RandomPolicy()
+    policy = QLearningPolicy() # TODO: fix QL policy and uncomment
+    # policy = RandomPolicy()
 
     # Helper function for timing
     elapsed = lambda tick, tock: time.strftime('%H:%M:%S', time.gmtime(tock - tick))
@@ -186,6 +197,7 @@ def run_experiment(settings):
         Helper to run_experiment that computes the win rate of the current policy
         against another computer opponent.
         """
+        policy.set_train(False)
         wins = 0
         tick = time.time()
         for i in range(testiters):
@@ -202,6 +214,7 @@ def run_experiment(settings):
             
         tock = time.time()
         print('(test_policy) {}% win rate (eval in: {})'.format(wins / testiters * 100, elapsed(tick, tock)))
+        policy.set_train(True)
         return wins / testiters
         
     tick = time.time()
@@ -217,6 +230,8 @@ def run_experiment(settings):
 
         if ((i + 1) % test_every == 0):
             test_policy(i)
+            dump_weights(path, policy.get_weights(), i)
+            print('Dumped weights.')
 
 
 def main():
