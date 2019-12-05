@@ -7,6 +7,7 @@ import os
 import shutil
 import time         # For timing training
 
+from util import strip_style
 from policy import QLearningPolicy, RandomPolicy
 from computer_player import ComputerPlayer
 from game import Dominion
@@ -60,7 +61,7 @@ def write_game_log(dir, game_log, iter, state):
     filename = os.path.join(dir, 'game_{}_iter{}.txt'.format(state, iter))
     if os.path.exists(filename): return # Already wrote one!
     with open(filename, 'w') as f:
-        f.write(game_log)
+        f.write(strip_style(game_log))
         f.close()
 
 
@@ -177,6 +178,7 @@ def run_experiment(settings):
     # policy = QLearningPolicy() # TODO: fix QL policy and uncomment
     policy = RandomPolicy()
 
+    # Helper function for timing
     elapsed = lambda tick, tock: time.strftime('%H:%M:%S', time.gmtime(tock - tick))
 
     def test_policy(train_iter):
