@@ -76,16 +76,6 @@ def write_game_log(dir, game_log, iter, info):
         f.close()
 
 
-def dump_weights(dir, weights, iter):
-    """
-    Dumps a pickle of the weights (from a policy).
-    """
-    filename = os.path.join(dir, 'weights_iter{}.pickle'.format(iter))
-    with open(filename, 'wb') as f:
-        pickle.dump({'weights': weights}, f)
-        f.close()
-
-
 def parse_args():
     """
     Parse command line arguments.
@@ -252,6 +242,14 @@ def dump_policy_losses(path, policy, i):
     policy.file.dump_to(filename)
 
 
+def dump_weights(path, policy, i):
+    """
+    Dumps policy losses.
+    """
+    filename = os.path.join(path, 'weights-iter{}.hdf5'.format(i))
+    policy.save_weights(filename)
+
+
 def run_experiment(settings):
     """
     Runs the specified experiment.
@@ -259,7 +257,7 @@ def run_experiment(settings):
     niters = settings['niters']
     test_every = settings['testevery']
     path = settings['path']
-    testiters = 10
+    testiters = 1
     # TODO: add verbose, cache every (?), log games on test (?), discount (?)
 
     # Create QLearningPolicy
@@ -296,6 +294,7 @@ def run_experiment(settings):
         policy.set_train(True)
         return wins / testiters
         
+    # test_policy(0)
     tick = time.time()
     for i in range(niters):
         # Create and simulate a game with itself
@@ -314,7 +313,7 @@ def run_experiment(settings):
 
         if ((i + 1) % test_every == 0):
             test_policy(i)
-            dump_weights(path, policy.get_weights(), i)
+            dump_weights(path, policy, i)
             print('Dumped weights.')
 
 

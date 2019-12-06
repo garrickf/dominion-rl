@@ -50,5 +50,5 @@ class Model:
 
         model = K.models.Model(inputs=X, outputs=out)
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=[])
-        model.summary() # DEBUG
+        # model.summary() # DEBUG
         return model

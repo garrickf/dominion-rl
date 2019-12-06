@@ -6,6 +6,8 @@ from card import AGENT_TYPES, PHASE_TYPES
 from util import color_box
 from utilities.log import Log
 from utilities.console import Console
+from policy import QLearningPolicy
+import sys
 
 NUM_PLAYERS = 2
 game_log = Log()
@@ -155,7 +157,11 @@ class Dominion:
 
 def main():
     # Testing code (play a game!)
-    dominion = Dominion()
+    filename = sys.argv[1] # Get weights
+
+    policy = QLearningPolicy(from_weights=filename)
+    players = [ComputerPlayer(1, policy=policy), Player(2)]
+    dominion = Dominion(with_players=players)
     dominion.play()
 
 

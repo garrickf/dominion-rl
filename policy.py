@@ -42,7 +42,7 @@ class Policy:
         pass
 
 
-    def add_last_experience(self):
+    def add_last_experience(self, reward):
         pass
 
 
@@ -67,10 +67,9 @@ class QLearningPolicy(Policy):
     # Can only update weights of PREVIOUS thing AFTER this phase
     # Computer extracts raw state, we extract FEATURES here.
     # NOTE: writing out files is a responsibility deferred to learn_dominion.py
-    def __init__(self, discount=0.95, instanced=False, fileid=1):
+    def __init__(self, discount=0.95, instanced=False, fileid=1, from_weights=None):
         super().__init__() # Call parent constructor
-        
-        self.weights = np.zeros((440, )) # TODO: remove
+
         self.discount = discount
         self.decay = 0.9
 
@@ -78,20 +77,13 @@ class QLearningPolicy(Policy):
 
         # TODO: add epsilon exploration, etc.
         
-        # TODO: fix file loading, add a provided kwarg for the source file
-        # If pickle exists, load it in.
-        # try:
-        #     infile = open(self.FILENAME, "rb")
-        #     (weights, iters) = defaultdict(float, pickle.load(infile))
-        #     self.weights, self.numIters = weights, iters
-        #     infile.close()
-        # except IOError:
-        #     print("No old weights to load in.")
-        
         if instanced:
             self.model = Model.get_model_instance()
         else:
             self.model = Model.get_model()
+
+        if from_weights is not None:
+            self.model.load_weights(from_weights)
         
         # self.model.summary() # Debug
 
@@ -219,9 +211,8 @@ class QLearningPolicy(Policy):
         # # Variable for total VP in deck of each player       
 
 
-    def get_weights(self):
-        # TODO: fix
-        return self.weights
+    def save_weights(self, filepath):
+        self.model.save_weights(filepath)
 
 
     def update_weights(self):
@@ -265,7 +256,7 @@ class QLearningPolicy(Policy):
             # print('Ideal y', y) # Debug
             loss = self.model.train_on_batch(old_beta.reshape(1, -1), y)
             self.file.write(loss)
-            print('(policy) loss: {}'.format(loss)) # Loss is in the 9000's
+            # print('(policy) loss: {}'.format(loss)) # Loss is in the 9000's
 
             old_beta = beta
             old_reward = reward
