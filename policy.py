@@ -12,7 +12,7 @@ import pickle
 from collections import defaultdict
 from util import sparseDot
 from card import get_card_id, ALL_CARDS
-from model import get_model
+from model import Model
 
 np.random.seed(1)
 random.seed(1)
@@ -61,7 +61,7 @@ class QLearningPolicy(Policy):
     # Can only update weights of PREVIOUS thing AFTER this phase
     # Computer extracts raw state, we extract FEATURES here.
     # NOTE: writing out files is a responsibility deferred to learn_dominion.py
-    def __init__(self, discount=0.95):
+    def __init__(self, discount=0.95, instanced=False):
         super().__init__() # Call parent constructor
         
         self.weights = np.zeros((440, )) # TODO: remove
@@ -77,9 +77,13 @@ class QLearningPolicy(Policy):
         #     infile.close()
         # except IOError:
         #     print("No old weights to load in.")
-
-        self.model = get_model()
-        self.model.summary() # Debug
+        
+        if instanced:
+            self.model = Model.get_model_instance()
+        else:
+            self.model = Model.get_model()
+        
+        # self.model.summary() # Debug
 
         self.experiences = []
         self.prev_beta = []
@@ -310,7 +314,8 @@ class QLearningPolicy(Policy):
         
         rewards += last_reward * np.array(decay)
         
-        print(len(rewards), len(betas))
+        print('Learing on {} experience tuples.'.format(len(betas)))
+        # print(rewards)
 
         old_beta = betas[0]
         old_reward = rewards[0]
@@ -334,6 +339,11 @@ class QLearningPolicy(Policy):
             old_reward = reward
 
             # TODO: will miss final reward? does it matter?
+
+        # Refresh: once we've learned, discard experiences and start over
+        self.experiences = []
+        self.prev_beta = []
+        self.prev_r = None
 
 
     def add_experience(self, beta, reward):
@@ -383,6 +393,7 @@ class QLearningPolicy(Policy):
             beta = self.extract_features(raw_state, chosen_action)
 
             self.add_experience(beta, reward)
+            return chosen_action
         else:
             return get_best_action(action_space, raw_state)
 

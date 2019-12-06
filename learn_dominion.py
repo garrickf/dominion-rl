@@ -7,6 +7,7 @@ import os
 import shutil
 import time         # For timing training
 import pickle
+import numpy as np
 
 from util import strip_style
 from policy import QLearningPolicy, RandomPolicy
@@ -25,14 +26,14 @@ def namespace(experiment_name):
     return 'exp_{}'.format(experiment_name)
 
 
-def manual_cmd_str(name, desc, n_iters, test_every):
+def manual_cmd_str(name, desc, n_iters, test_every, levels):
     """
     Returns a string representation of the manual command to run an experiment
     with given parameters.
     """
-    format_str = 'python learn_dominion.py --name {}{} --niters {} --testevery {}'
+    format_str = 'python learn_dominion.py --name {}{} --niters {} --testevery {} --levels {}'
     comment = ' -m "{}"'.format(desc) if desc else ''
-    return format_str.format(name, comment, n_iters, test_every)
+    return format_str.format(name, comment, n_iters, test_every, levels)
 
 
 def write_metafile(dir, settings):
@@ -42,24 +43,32 @@ def write_metafile(dir, settings):
     """
     filename = os.path.join(dir, 'meta.txt')
     with open(filename, 'w') as f:
-        f.write('Name: {}\n'.format(settings['name']))
-        f.write('Description: {}\n'.format(settings['desc']))
+        name = settings['name']
+        desc = settings['desc']
+        niters = settings['niters']
+        testevery = settings['testevery']
+        levels = settings['levels']
+
+        f.write('Name: {}\n'.format(name))
+        f.write('Description: {}\n'.format(desc))
 
         now = datetime.datetime.now()
         when = '{} {}:{}'.format(now.date(), now.hour, now.minute)
         f.write('Created: {}\n'.format(when))
 
-        f.write('Iters: {}\n'.format(settings['niters']))
-        f.write('Test/cache weights every: {}\n'.format(settings['testevery']))
+        f.write('Iters: {}\n'.format(niters))
+        f.write('Test/cache weights every: {}\n'.format(testevery))
+
+        f.write('Cmd string:\n\t{}\n'.format(manual_cmd_str(name, desc, niters, testevery, levels)))
         f.close()
 
 
-def write_game_log(dir, game_log, iter, state):
+def write_game_log(dir, game_log, iter, info):
     """
     Writes a game log, indexed by the maturity (in iters) of the policy and the 
-    string state (win or lose). Useful to see deveopment of strategies.
+    string info (e.g., win or lose). Useful to see deveopment of strategies.
     """
-    filename = os.path.join(dir, 'game_{}_iter{}.txt'.format(state, iter))
+    filename = os.path.join(dir, 'game_{}_iter{}.txt'.format(info, iter))
     if os.path.exists(filename): return # Already wrote one!
     with open(filename, 'w') as f:
         f.write(strip_style(game_log))
@@ -85,7 +94,8 @@ def parse_args():
     parser.add_argument('-m, --message', default='', dest='message', help='comments on experiment/description')
     parser.add_argument('-i', '--interactive', action='store_true', help='setup experiment in interactive mode')
     parser.add_argument('--niters', type=int, default=100, help='number of iterations to train for')
-    parser.add_argument('--testevery', type=int, default=10, help='how often to test the policy')
+    parser.add_argument('--testevery', type=int, default=50, help='how often to test the policy')
+    parser.add_argument('--levels', type=int, default=0, help='number of CPU levels to train against, tournament-style')
     # parser.add_argument('--experiment', '-e', default=0, type=int, help='Experiment number.')
     # parser.add_argument('--test', '-t', action='store_true', help='Run test set (default: False).')
     # parser.add_argument('--save_weights', '-s', action='store_true', help='Save weights (default: False).')
@@ -156,14 +166,15 @@ def prompt_settings():
     okay = False
     while not okay:
         print('Experiment setup:')
+        levels = get_integer('Number of levels/brackets? 0 for normal iterative.')
         iters = get_integer('Number of training iters/games?')
         test_every = get_integer('Test agent every n games. n?')
 
-        print('Iters\t{}\nTest Every:\t{} games'.format(iters, test_every))
+        print('Brackets:\t{}\nIters\t{}\nTest Every:\t{} games'.format(levels, iters, test_every))
 
         okay = get_yes_or_no('OK?')
     
-    print('To run this experiment again directly from the command line, run:\n\n\t{}\n'.format(manual_cmd_str(name, desc, iters, test_every)))
+    print('To run this experiment again directly from the command line, run:\n\n\t{}\n'.format(manual_cmd_str(name, desc, iters, test_every, levels)))
 
     return {
         'path': path,
@@ -171,8 +182,65 @@ def prompt_settings():
         'desc': desc,
         'niters': iters,
         'testevery': test_every,
+        'levels': levels
     }
     # TODO: verbosity, save game logs (?), discount factor ...
+
+
+def run_bracket_experiment(settings):
+    levels = settings['levels']
+    path = settings['path']
+    best_policy = bracket(levels, settings)
+    dump_weights(path, best_policy.get_weights(), levels) # Dump the best policy
+
+
+def bracket(n, settings):
+    if n == 0:
+        # Play against a random policy
+        policy = QLearningPolicy()
+        players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())]
+        best_policy = compete(players, settings, n)
+        return best_policy
+
+    # Make two level n-1 brackets
+    best_policy_1 = bracket(n-1, settings)
+    best_policy_2 = bracket(n-1, settings)
+
+    players = [ComputerPlayer(1, policy=best_policy_1), ComputerPlayer(2, policy=best_policy_2)]
+    best_policy = compete(players, settings, n)
+    return best_policy
+
+
+def compete(players, settings, n):
+    niters = settings['niters']
+    test_every = settings['testevery']
+    path = settings['path']
+    levels = settings['levels']
+
+    # Helper function for timing
+    elapsed = lambda tick, tock: time.strftime('%H:%M:%S', time.gmtime(tock - tick))
+        
+    print('Competition for a {}-level bracket!'.format(n))
+    tick = time.time()
+    wins = [0, 0]
+    for i in range(niters):
+        # Create and simulate a game
+        game = Dominion(with_players=players, silence_output=True)        
+
+        winner_idx, scores = game.play()
+        wins[winner_idx] += 1
+        tock = time.time()
+        write_game_log(path, game.get_log(), i, '{}-level'.format(n))
+        
+        print('Iter: {}, winner: {}, scores: {}, {} elapsed'.format(i, winner_idx, scores, elapsed(tick, tock)))
+
+    if n == 0:
+        # First player always advances
+        return players[0].policy
+
+    winner_idx = np.argmax(wins)
+    print('Player {} advances!'.format(winner_idx + 1))
+    return players[winner_idx].policy # Return best player's policy
 
 
 def run_experiment(settings):
@@ -186,8 +254,9 @@ def run_experiment(settings):
     # TODO: add verbose, cache every (?), log games on test (?), discount (?)
 
     # Create QLearningPolicy
-    policy = QLearningPolicy() # TODO: fix QL policy and uncomment
-    # policy = RandomPolicy()
+    policy = QLearningPolicy(instanced=True)
+    policy_clone = QLearningPolicy(instanced=True)
+    assert(policy.model == policy_clone.model) # Should be same ref
 
     # Helper function for timing
     elapsed = lambda tick, tock: time.strftime('%H:%M:%S', time.gmtime(tock - tick))
@@ -220,8 +289,8 @@ def run_experiment(settings):
         
     tick = time.time()
     for i in range(niters):
-        # Create and simulate a game
-        players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())] # TODO: player could go first or second
+        # Create and simulate a game with itself
+        players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=policy_clone)]
         game = Dominion(with_players=players, silence_output=True)        
 
         winner_idx, scores = game.play()
@@ -236,6 +305,9 @@ def run_experiment(settings):
 
 
 def main():
+    """
+    Extract args and begin experiment.
+    """
     args = parse_args()
     if args.interactive: 
         settings = prompt_settings()
@@ -248,6 +320,7 @@ def main():
             'path': path,
             'niters': args.niters,
             'testevery': args.testevery,
+            'levels': args.levels,
         }
 
         if os.path.exists(path) and os.path.isdir(path):
@@ -264,8 +337,11 @@ def main():
     os.mkdir(path)
     write_metafile(path, settings)
 
-    # Run experiment given settings
-    run_experiment(settings)
+    levels = settings['levels']
+    if levels == 0:
+        run_experiment(settings) # Can now beat a random opponent in a fixed game!
+    else: 
+        run_bracket_experiment(settings)
 
 
 if __name__ == '__main__':

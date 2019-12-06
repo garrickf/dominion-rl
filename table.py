@@ -4,8 +4,9 @@ import numpy as np
 
 np.random.seed(1)
 
-# Flip to True to test all cards.
+# Flip debug to True to test all cards.
 DEBUG = False
+FIXED = True
 
 class Table:
     def __init__(self, num_players):
@@ -18,6 +19,8 @@ class Table:
 
         if DEBUG:
             kingdom = KINGDOM_CARDS
+        if FIXED:
+            kingdom = [CHAPEL, BANDIT, WITCH, MARKET, VILLAGE, SMITHY, MINE, MERCHANT, WORKSHOP, CELLAR]
 
         self.kingdom = kingdom
         

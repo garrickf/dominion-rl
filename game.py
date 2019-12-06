@@ -109,6 +109,16 @@ class Dominion:
                 self.rounds += 1
             self.whose_turn = self.turns % len(self.players)
 
+            if self.rounds == 250:
+                print('Game timeout...')
+                self.game_info.over = True
+                self.game_info.margin = 100
+
+                for player in self.players:
+                    player.reflect() # End of game reflection/terminal state
+
+                return (1, [0, 0])
+
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
         margin = abs(scores[1] - scores[0]) # NOTE: assumes 2-player game

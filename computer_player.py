@@ -9,6 +9,7 @@ class ComputerPlayer(Player):
         super().__init__(i, game_info) # Call parent constructor
         self.type = 'Computer'
         self.policy = policy
+        self.penalty = 0
 
 
     def extract_raw_state(self):
@@ -25,9 +26,15 @@ class ComputerPlayer(Player):
 
 
     def choose(self, choice_set, **kwargs): # TODO: choose needs kwargs fleshed out
-        reward = self.get_reward()
+        reward = self.get_reward() + self.penalty
+        self.penalty = 0
         raw_state = self.extract_raw_state()
-        return self.policy.get_next_action(choice_set, raw_state, reward=reward)
+        next_action = self.policy.get_next_action(choice_set, raw_state, reward=reward)
+        if next_action == None:
+            # print('Penalized for doing nothing')
+            # Penalize the player next round for doing nothing
+            self.penalty = -100
+        return next_action
 
 
     def reflect(self):

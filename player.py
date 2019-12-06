@@ -196,7 +196,8 @@ class Player:
 
             purchasable = table.get_purchasable_cards(pp)
             prompt_str = 'Make a purchase or ENTER to skip'
-            choice = self.choose(purchasable + [None], prompt=prompt_str)
+            choice_set = purchasable if pp >= 3 else [None]
+            choice = self.choose(choice_set, prompt=prompt_str)
             if choice == None:
                 break
 
