@@ -257,7 +257,7 @@ def run_experiment(settings):
     niters = settings['niters']
     test_every = settings['testevery']
     path = settings['path']
-    testiters = 1
+    testiters = 10
     # TODO: add verbose, cache every (?), log games on test (?), discount (?)
 
     # Create QLearningPolicy
