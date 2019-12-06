@@ -14,6 +14,8 @@ from util import sparseDot
 from card import get_card_id, ALL_CARDS
 from model import Model
 
+from utilities.filelog import FileLog
+
 np.random.seed(1)
 random.seed(1)
 
@@ -40,6 +42,10 @@ class Policy:
         pass
 
 
+    def add_last_experience(self):
+        pass
+
+
 class FixedPolicy(Policy):
     def get_next_action(self, action_space, current_state, reward=None):
         return action_space[0]
@@ -61,11 +67,15 @@ class QLearningPolicy(Policy):
     # Can only update weights of PREVIOUS thing AFTER this phase
     # Computer extracts raw state, we extract FEATURES here.
     # NOTE: writing out files is a responsibility deferred to learn_dominion.py
-    def __init__(self, discount=0.95, instanced=False):
+    def __init__(self, discount=0.95, instanced=False, fileid=1):
         super().__init__() # Call parent constructor
         
         self.weights = np.zeros((440, )) # TODO: remove
         self.discount = discount
+        self.decay = 0.9
+
+        self.num_features = 644 # TODO: update as more features added
+
         # TODO: add epsilon exploration, etc.
         
         # TODO: fix file loading, add a provided kwarg for the source file
@@ -86,8 +96,18 @@ class QLearningPolicy(Policy):
         # self.model.summary() # Debug
 
         self.experiences = []
-        self.prev_beta = []
-        self.prev_r = None
+        self.prev_beta = None
+
+        self.file = FileLog.file('pol{}-losses'.format(fileid))
+
+
+    def get_sentinel(self):
+        """
+        The sentinel beta (s, a) encoding is just a vector of zeros, fed to the 
+        network. Hopefully, the network doesn't assign Q-value to the sentinel-
+        otherwise, it may inflate prior estimates of Q-value and explode...
+        """
+        return np.zeros((self.num_features,))
 
 
     def extract_features(self, raw_state, action): # TODO: include action name
@@ -139,17 +159,11 @@ class QLearningPolicy(Policy):
         
         # Example code to create a bunch of one-hot vectors
         targets = np.eye(NUM_CARDS)[idxs] # Repeatedly sample rows of the id matrix
-        if targets.shape[0] < 10:
-            # Pad up to 10 cards with zeros for 'no card' (=340 params)
-            pad = np.zeros((10 - targets.shape[0], targets.shape[1]))
+        if targets.shape[0] < 15:
+            # Pad up to 15 cards with zeros for 'no card' (=340 params)
+            pad = np.zeros((15 - targets.shape[0], targets.shape[1]))
             targets = np.concatenate([targets, pad], axis=0)
-
-        assert(targets.shape[0] == 10 and targets.shape[1] == 34)
-
         all_features = np.concatenate([all_features, targets.flatten()])
-
-        assert(all_features.shape[0] == 440)
-        assert(not np.isnan(np.sum(all_features)))
         
         """
         Features about the table
@@ -165,8 +179,10 @@ class QLearningPolicy(Policy):
 
         present = np.sum(present, axis=0)
         all_features = np.concatenate([all_features, present])
-
-        return all_features # NOTE: right now, features are just: what's in hand
+        
+        # print(all_features.shape[0])
+        assert(all_features.shape[0] == self.num_features)
+        return all_features
 
         # TODO: dbl-check, revise, and reincorporate code below...
         
@@ -201,92 +217,6 @@ class QLearningPolicy(Policy):
         # ###### Features about other players. ######
 
         # # Variable for total VP in deck of each player       
-    
-    def update_weights_old(self, new_beta, new_r):
-        # check if 'state' is terminal, if so, no q-update
-        # estimate = self.getQ(state, action)
-        # observation = 
-        # 𝑄(𝑠,𝑎)←𝑄(𝑠,𝑎)+𝛼[𝑟+𝛾𝑄(𝑠′,𝑎′)−𝑄(𝑠,𝑎)]
-        # θ ← θ + α(rt +γmaxθ⊤β(st+1,a)−θ⊤β(st,at))β(st,at)
-
-        """
-        Update weights using SARSA in a delayed fashion, as new experiences
-        come in. This is because it takes multiple player turns to create one
-        experience tuple, so previous turns have to be cached:
-    
-                                      another turn...
-                                      ----------
-                           one turn
-                           ---------
-        experience n:      s   a   r  sp  ap
-        experience n + 1:  -----      s   a   r  sp  ap
-                           beta       -----
-                                      betap
-        
-        In each turn, we get s, a, and r. s and a are passed through extract_features
-        to get the feature vector beta.
-        """
-
-        # NOTE: this is SARSA! TODO: impl. Q learning or fix...
-        # Compute interpolated Q values
-        if self.r is None:
-            self.r = 0 # Start reward at 0
-            self.beta = new_beta
-            return # Wait for next r to get a full exp tuple
-
-        # We have enough information to update weights with one experience tuple
-        beta_cached = self.beta
-        r_cached = self.r
-
-        # if new_r > 0:
-        #     print('got new reward > 0')
-        # if r_cached > 0:
-        #     print('taking out cached reward > 0')
-        
-        # Q_hat = self.weights.T.dot(beta_cached)
-        # Qp_hat = self.weights.T.dot(new_beta) # IDEA: Qp_hat should be 0 at the end
-
-        Q_hat = self.model.predict(beta_cached.reshape(1, -1))
-        Qp_hat = self.model.predict(new_beta.reshape(1, -1))
-
-        # print('Q vals, predicted', Q_hat, Qp_hat)
-
-        # Compute delta (no need for temporal difference)
-        # delta = r_cached + self.discount * Qp_hat - Q_hat
-        
-        # Update theta
-        # TODO: bug with mult by beta
-        # old_weights = self.weights
-        # self.weights += self.learning_rate * delta * beta_cached # Add to numpy array
-        """
-        NN aproach (no TD)
-        """
-        y = r_cached + self.discount * Qp_hat
-        print('Ideal y', y)
-        self.model.train_on_batch(beta_cached.reshape(1, -1), y)
-
-        if(np.max(self.weights) > 100):
-            print('Higher Qval than end state reward')
-            print('Qhat', Q_hat, 'old weights', old_weights, 'beta_cached', beta_cached)
-            assert(False)
-
-        if np.isnan(np.sum(self.weights)):
-            print('It got bad')
-            print('Qhat', Q_hat, 'old weights', old_weights, 'beta_cached', beta_cached)
-
-            assert(False)
-        # THOUGHT: is weighing by beta okay with indicator features (these aren't scaled, they are binary!)
-
-        # Cache most recent beta and r
-        self.beta = new_beta
-        self.r = new_r
-
-
-    def getQ(self, state, action):
-        # TODO: remove, perhaps
-        # return 0 if state is terminal
-        feature_vec = self.featureExtractor(state, action)
-        return sparseDot(feature_vec, self.weights)
 
 
     def get_weights(self):
@@ -305,16 +235,17 @@ class QLearningPolicy(Policy):
 
         betas, rewards = zip(*self.experiences) # Unzip
 
+        # print(rewards)
+
         # Propagate final reward back through list of rewards 
         betas = np.array(betas)
         rewards = np.array(rewards, dtype=np.float64)
-        decay = [0.99 ** (len(rewards) - i - 1) for i in range(len(rewards))] # 0.99 seems good
+        decay = [self.decay ** (len(rewards) - i - 1) for i in range(len(rewards))] # 0.9 seems good
         decay[-1] = 0 # Decay does not apply to last reward
         last_reward = rewards[-1]
         
         rewards += last_reward * np.array(decay)
-        
-        print('Learing on {} experience tuples.'.format(len(betas)))
+        print('(policy) Learning on {} experience tuples.'.format(len(betas)))
         # print(rewards)
 
         old_beta = betas[0]
@@ -333,7 +264,8 @@ class QLearningPolicy(Policy):
             y = old_reward + self.discount * Qp_hat
             # print('Ideal y', y) # Debug
             loss = self.model.train_on_batch(old_beta.reshape(1, -1), y)
-            # print(loss, 'loss') # Loss is in the 9000's
+            self.file.write(loss)
+            print('(policy) loss: {}'.format(loss)) # Loss is in the 9000's
 
             old_beta = beta
             old_reward = reward
@@ -342,11 +274,10 @@ class QLearningPolicy(Policy):
 
         # Refresh: once we've learned, discard experiences and start over
         self.experiences = []
-        self.prev_beta = []
-        self.prev_r = None
+        self.prev_beta = None
 
 
-    def add_experience(self, beta, reward):
+    def add_experience(self, reward, beta):
         """
         Called each time the policy is asked to return a new action. In training
         mode, the policy needs to cache the beta (an (s, a) encoding) and reward
@@ -354,20 +285,24 @@ class QLearningPolicy(Policy):
         """
         if not self.train: return # Do not collect experience in test mode
 
-        if self.prev_r is None:
-            self.prev_r = 0 # Begin recording rewards (value 0 is meaningless)
+        if self.prev_beta is None:
             self.prev_beta = beta
-            return # Wait for next r to get a full exp tuple
+            return # Wait for next time to get a full exp tuple
 
         self.experiences.append((self.prev_beta, reward))
-        self.prev_r = reward
         self.prev_beta = beta
 
 
-    def get_next_action(self, action_space, raw_state, reward=0): # TODO: include phase (perhaps in GameInfo?)
+    def add_last_experience(self, reward):
+        beta = self.get_sentinel() # The last beta is a cap
+        self.add_experience(reward, beta)
+
+
+    def get_next_action(self, action_space, raw_state, reward=0):
         """
         If in training mode, get_next_action follows a certain policy. Otherwise,
-        it plays (hard) with the weights it has learned over time.
+        it plays (hard) with the weights it has learned over time. Receives
+        r, s (previous reward!) from the game.
 
         If enough information exists for an experience tuple, updates weights.
         """
@@ -379,7 +314,8 @@ class QLearningPolicy(Policy):
             Q_vals = self.model.predict(betas)
             # print(Q_vals) # Debug
             best_action = action_space[np.argmax(Q_vals)]
-            return best_action
+            best_action_beta = betas[np.argmax(Q_vals)]
+            return best_action, best_action_beta
 
         if self.train:
             """
@@ -388,14 +324,15 @@ class QLearningPolicy(Policy):
             """
             if random.random() < 0.3: # With probability epsilon, explore
                 chosen_action = random.choice(action_space)
+                beta = self.extract_features(raw_state, chosen_action)
             else:
-                chosen_action = get_best_action(action_space, raw_state)
-            beta = self.extract_features(raw_state, chosen_action)
+                chosen_action, beta = get_best_action(action_space, raw_state)
 
-            self.add_experience(beta, reward)
+            self.add_experience(reward, beta)
             return chosen_action
         else:
-            return get_best_action(action_space, raw_state)
+            chosen_action, beta = get_best_action(action_space, raw_state)
+            return chosen_action
 
 
 # qlp = QLearningPolicy()

@@ -13,6 +13,7 @@ from util import strip_style
 from policy import QLearningPolicy, RandomPolicy
 from computer_player import ComputerPlayer
 from game import Dominion
+from utilities.filelog import FileLog
 
 CWD = os.getcwd()
 
@@ -243,6 +244,14 @@ def compete(players, settings, n):
     return players[winner_idx].policy # Return best player's policy
 
 
+def dump_policy_losses(path, policy, i):
+    """
+    Dumps policy losses.
+    """
+    filename = os.path.join(path, '{}-iter{}.txt'.format(policy.file.filename, i))
+    policy.file.dump_to(filename)
+
+
 def run_experiment(settings):
     """
     Runs the specified experiment.
@@ -254,8 +263,8 @@ def run_experiment(settings):
     # TODO: add verbose, cache every (?), log games on test (?), discount (?)
 
     # Create QLearningPolicy
-    policy = QLearningPolicy(instanced=True)
-    policy_clone = QLearningPolicy(instanced=True)
+    policy = QLearningPolicy(instanced=True, fileid=1)
+    policy_clone = QLearningPolicy(instanced=True, fileid=2)
     assert(policy.model == policy_clone.model) # Should be same ref
 
     # Helper function for timing
@@ -296,7 +305,12 @@ def run_experiment(settings):
         winner_idx, scores = game.play()
         tock = time.time()
         # print(game.get_log())
-        print('Iter: {}, winner: {}, scores: {}, {} elapsed'.format(i, winner_idx, scores, elapsed(tick, tock)))
+        format_str = '> [{:3}]: P{} won {} to {} in {} rounds ({} elapsed)'
+        rounds = game.game_info.rounds
+        print(format_str.format(i, winner_idx+1, *sorted(scores, reverse=True), rounds, elapsed(tick, tock)))
+
+        # Dump policy losses for each iter
+        dump_policy_losses(path, policy, i)
 
         if ((i + 1) % test_every == 0):
             test_policy(i)

@@ -17,15 +17,22 @@ class Model:
 
     @staticmethod
     def get_model():
-        NUM_FEATURES = 100 + 340 + 34 # From policy.py
         NUM_ACTIONS = 100
+        HAND_SIZE = 510
+        DECK_SIZE = 34
+
+        NUM_FEATURES = NUM_ACTIONS + HAND_SIZE + DECK_SIZE # From policy.py
         X = K.layers.Input(shape=(NUM_FEATURES,), name='input')
 
         # Pull slices out from flattened feature vector
-        action = K.layers.Lambda(lambda x: x[:, 0:100], output_shape=(100), name='action')(X)
-        hand = K.layers.Lambda(lambda x: x[:, 100:440], output_shape=(340, 1), name='hand')(X)
-        hand = K.layers.Reshape((340, 1))(hand)
-        table = K.layers.Lambda(lambda x: x[:, 440:440+34], output_shape=(34), name='table')(X)
+        action = K.layers.Lambda(lambda x: x[:, 0:100], output_shape=(100,), name='action')(X)
+        
+        hand = K.layers.Lambda(lambda x: x[:, 100:610], output_shape=(610,), name='hand')(X)
+        hand = K.layers.Reshape((510, 1))(hand)
+        
+        table = K.layers.Lambda(lambda x: x[:, 610:644], output_shape=(34,), name='table')(X)
+
+        # TODO: more layers
 
         action = K.layers.Dense(16, activation='relu')(action)
         hand = K.layers.Conv1D(16, kernel_size=(34,), strides=34, activation='relu')(hand)
@@ -43,5 +50,5 @@ class Model:
 
         model = K.models.Model(inputs=X, outputs=out)
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=[])
-        # model.summary() # DEBUG
+        model.summary() # DEBUG
         return model

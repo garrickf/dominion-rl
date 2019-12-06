@@ -44,8 +44,7 @@ class ComputerPlayer(Player):
         experiences and training themselves with the command update_weights.
         """
         reward = self.get_reward()
-        raw_state = self.extract_raw_state()
-        self.policy.get_next_action([None], raw_state, reward=reward) # Actions don't matter: we won
+        self.policy.add_last_experience(reward)
 
         self.policy.update_weights() # Reflect on game experience
 
@@ -56,12 +55,13 @@ class ComputerPlayer(Player):
         it is assigned at the end of the game. The player receives the most reward
         for simply winning; an addition bonus is given for the margin by which the
         player wins; this hopefully incentivizes trouncing, but not too much that
-        it becomes hubris.
+        it becomes hubris. Furthermore, the number of rounds is subtracted from
+        a win: win fast!
         """
         reward = 0
         if self.game.over:
             if self.player_number == self.game.winning_player_number:
-                reward = 100 + self.game.margin * 10
+                reward = 100 + self.game.margin * 50 - self.game.rounds
                 print('Player {} won, reward of {}'.format(self.player_number, reward))
             else:
                 reward = -100 - self.game.margin * 10

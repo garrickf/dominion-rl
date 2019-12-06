@@ -24,6 +24,7 @@ class Dominion:
                 self.winning_player_number = None
                 self.over = False
                 self.margin = None
+                self.rounds = None
 
         self.game_info = GameInformation()
         self.table = self.game_info.table # Convenience
@@ -113,6 +114,7 @@ class Dominion:
                 print('Game timeout...')
                 self.game_info.over = True
                 self.game_info.margin = 100
+                self.game_info.rounds = self.rounds
 
                 for player in self.players:
                     player.reflect() # End of game reflection/terminal state
@@ -127,6 +129,7 @@ class Dominion:
         self.game_info.over = True
         self.game_info.winning_player_number = idx + 1
         self.game_info.margin = margin
+        self.game_info.rounds = self.rounds
 
         for player in self.players:
             player.reflect() # End of game reflection/terminal state
