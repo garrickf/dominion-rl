@@ -12,6 +12,10 @@ import pickle
 from collections import defaultdict
 from util import sparseDot
 from card import get_card_id, ALL_CARDS
+from model import get_model
+
+np.random.seed(1)
+random.seed(1)
 
 NUM_CARDS = len(ALL_CARDS)
 
@@ -60,10 +64,9 @@ class QLearningPolicy(Policy):
     def __init__(self, discount=0.95):
         super().__init__() # Call parent constructor
         
-        # self.weights = defaultdict(float)
-        self.weights = np.zeros((340, ))
+        self.weights = np.zeros((440, )) # TODO: remove
         self.discount = discount
-        self.learning_rate = 0.9
+        # TODO: add epsilon exploration, etc.
         
         # TODO: fix file loading, add a provided kwarg for the source file
         # If pickle exists, load it in.
@@ -75,11 +78,12 @@ class QLearningPolicy(Policy):
         # except IOError:
         #     print("No old weights to load in.")
 
-        # TODO: Need to keep track of old state (s), action (a) and old reward (r), 
-        # so newly observed state (sp) can be used in update
+        self.model = get_model()
+        self.model.summary() # Debug
 
-        self.beta = []
-        self.r = None
+        self.experiences = []
+        self.prev_beta = []
+        self.prev_r = None
 
 
     def extract_features(self, raw_state, action): # TODO: include action name
@@ -88,6 +92,8 @@ class QLearningPolicy(Policy):
         and return a one-dimensional vector with n components, where n is the number
         of features. This will be provided as input to the QLearning algorithm.
         """
+        # TODO: clean up
+        EYE = np.eye(100) # Only 100 sparse vectors can be pulled!
 
         # Unpack entries from raw_state
         table = raw_state['table']
@@ -96,10 +102,24 @@ class QLearningPolicy(Policy):
         
         # TODO: add whose turn, number of rounds so far, current player's deck n hand...
 
-        all_features = []
+        all_features = np.array([])
 
         """
-        Features about ourself
+        Features about action being taken
+
+        One hot vector of the action is produced. Think of it like visual input:
+        we type the number specified by the one-hot.
+        """
+        # Shift all actions by one
+        if action == None: 
+            action = 0
+        else:
+            action += 1
+        action_one_hot = EYE[action]
+        all_features = np.concatenate([all_features, action_one_hot])
+
+        """
+        Features about ourselves
 
         Note: get_card_id takes as input a card and returns an index associated
         with it. This consistency lets us refer to cards by number when constructing
@@ -122,7 +142,26 @@ class QLearningPolicy(Policy):
 
         assert(targets.shape[0] == 10 and targets.shape[1] == 34)
 
-        all_features = targets.reshape(-1)
+        all_features = np.concatenate([all_features, targets.flatten()])
+
+        assert(all_features.shape[0] == 440)
+        assert(not np.isnan(np.sum(all_features)))
+        
+        """
+        Features about the table
+
+        Store this as a vector the size of the number of distinct cards. Store
+        the number of cards remaining in each component of the vector.
+        """
+        present = []
+        for card in table.cards:
+            left = table.table[card]
+            idx = get_card_id(card)
+            present.append(np.eye(NUM_CARDS)[idx] * left)
+
+        present = np.sum(present, axis=0)
+        all_features = np.concatenate([all_features, present])
+
         return all_features # NOTE: right now, features are just: what's in hand
 
         # TODO: dbl-check, revise, and reincorporate code below...
@@ -159,9 +198,7 @@ class QLearningPolicy(Policy):
 
         # # Variable for total VP in deck of each player       
     
-    #TODO: IMPLEMENT QLEARNING OR SARSA
-    #TODO: HANDLE TERMINAL STATE SOMEHOW
-    def update_weights(self, new_beta, new_r):
+    def update_weights_old(self, new_beta, new_r):
         # check if 'state' is terminal, if so, no q-update
         # estimate = self.getQ(state, action)
         # observation = 
@@ -196,15 +233,44 @@ class QLearningPolicy(Policy):
         # We have enough information to update weights with one experience tuple
         beta_cached = self.beta
         r_cached = self.r
-        
-        Q_hat = self.weights.T.dot(beta_cached)
-        Qp_hat = self.weights.T.dot(new_beta)
 
-        # Compute delta
-        delta = r_cached + self.discount * Qp_hat - Q_hat
+        # if new_r > 0:
+        #     print('got new reward > 0')
+        # if r_cached > 0:
+        #     print('taking out cached reward > 0')
+        
+        # Q_hat = self.weights.T.dot(beta_cached)
+        # Qp_hat = self.weights.T.dot(new_beta) # IDEA: Qp_hat should be 0 at the end
+
+        Q_hat = self.model.predict(beta_cached.reshape(1, -1))
+        Qp_hat = self.model.predict(new_beta.reshape(1, -1))
+
+        # print('Q vals, predicted', Q_hat, Qp_hat)
+
+        # Compute delta (no need for temporal difference)
+        # delta = r_cached + self.discount * Qp_hat - Q_hat
         
         # Update theta
-        self.weights += self.learning_rate * delta #* new_beta # Add to numpy array
+        # TODO: bug with mult by beta
+        # old_weights = self.weights
+        # self.weights += self.learning_rate * delta * beta_cached # Add to numpy array
+        """
+        NN aproach (no TD)
+        """
+        y = r_cached + self.discount * Qp_hat
+        print('Ideal y', y)
+        self.model.train_on_batch(beta_cached.reshape(1, -1), y)
+
+        if(np.max(self.weights) > 100):
+            print('Higher Qval than end state reward')
+            print('Qhat', Q_hat, 'old weights', old_weights, 'beta_cached', beta_cached)
+            assert(False)
+
+        if np.isnan(np.sum(self.weights)):
+            print('It got bad')
+            print('Qhat', Q_hat, 'old weights', old_weights, 'beta_cached', beta_cached)
+
+            assert(False)
         # THOUGHT: is weighing by beta okay with indicator features (these aren't scaled, they are binary!)
 
         # Cache most recent beta and r
@@ -213,13 +279,79 @@ class QLearningPolicy(Policy):
 
 
     def getQ(self, state, action):
+        # TODO: remove, perhaps
         # return 0 if state is terminal
         feature_vec = self.featureExtractor(state, action)
         return sparseDot(feature_vec, self.weights)
 
 
     def get_weights(self):
+        # TODO: fix
         return self.weights
+
+
+    def update_weights(self):
+        """
+        NN Draft: update weights with self.experience
+
+        New: with reward (triggered by reflection on previous experience), decay
+        reward backwards through past actions (if I won, these actions were good)
+        """
+        if not self.train: return # Do not update model in test mode
+
+        betas, rewards = zip(*self.experiences) # Unzip
+
+        # Propagate final reward back through list of rewards 
+        betas = np.array(betas)
+        rewards = np.array(rewards, dtype=np.float64)
+        decay = [0.99 ** (len(rewards) - i - 1) for i in range(len(rewards))] # 0.99 seems good
+        decay[-1] = 0 # Decay does not apply to last reward
+        last_reward = rewards[-1]
+        
+        rewards += last_reward * np.array(decay)
+        
+        print(len(rewards), len(betas))
+
+        old_beta = betas[0]
+        old_reward = rewards[0]
+        for i in range(1, len(rewards)):
+            beta = betas[i]
+            reward = rewards[i]
+            
+            Q_hat = self.model.predict(old_beta.reshape(1, -1))
+            Qp_hat = self.model.predict(beta.reshape(1, -1))
+            # print('Q vals, predicted', Q_hat, Qp_hat) # Debug
+
+            # old   new
+            # . . . x x x
+            # s a r s a r
+            y = old_reward + self.discount * Qp_hat
+            # print('Ideal y', y) # Debug
+            loss = self.model.train_on_batch(old_beta.reshape(1, -1), y)
+            # print(loss, 'loss') # Loss is in the 9000's
+
+            old_beta = beta
+            old_reward = reward
+
+            # TODO: will miss final reward? does it matter?
+
+
+    def add_experience(self, beta, reward):
+        """
+        Called each time the policy is asked to return a new action. In training
+        mode, the policy needs to cache the beta (an (s, a) encoding) and reward
+        for later, to learn from the experience.
+        """
+        if not self.train: return # Do not collect experience in test mode
+
+        if self.prev_r is None:
+            self.prev_r = 0 # Begin recording rewards (value 0 is meaningless)
+            self.prev_beta = beta
+            return # Wait for next r to get a full exp tuple
+
+        self.experiences.append((self.prev_beta, reward))
+        self.prev_r = reward
+        self.prev_beta = beta
 
 
     def get_next_action(self, action_space, raw_state, reward=0): # TODO: include phase (perhaps in GameInfo?)
@@ -229,20 +361,30 @@ class QLearningPolicy(Policy):
 
         If enough information exists for an experience tuple, updates weights.
         """
-        if self.train:
-            chosen_action = random.choice(action_space)
-            beta = self.extract_features(raw_state, chosen_action)
-            
-            # Update weights
-            self.update_weights(beta, reward)
+        def get_best_action(action_space, raw_state):
+            # Extract features, calculate betas, feed to network for processing.
+            # print('calculating q vals for action space of size {}'.format(len(action_space)))
+            betas = [self.extract_features(raw_state, action) for action in action_space]
+            betas = np.array(betas)
+            Q_vals = self.model.predict(betas)
+            # print(Q_vals) # Debug
+            best_action = action_space[np.argmax(Q_vals)]
+            return best_action
 
+        if self.train:
+            """
+            Uses a Epsilon-greedy policy that updates with each game (after model
+            is trained)
+            """
+            if random.random() < 0.3: # With probability epsilon, explore
+                chosen_action = random.choice(action_space)
+            else:
+                chosen_action = get_best_action(action_space, raw_state)
+            beta = self.extract_features(raw_state, chosen_action)
+
+            self.add_experience(beta, reward)
         else:
-            # TODO: use theta and extract features to choose action. Sketched below:
-            # features = [self.extract_features(raw_state, action) for action in action_space]
-            # Q_vals = [sparseDot(f, self.weights) for f in features]
-            # best_action = action_space[np.argmax(Q_vals)]
-            # return best_action
-            return random.choice(action_space)
+            return get_best_action(action_space, raw_state)
 
 
 # qlp = QLearningPolicy()

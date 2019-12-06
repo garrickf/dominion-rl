@@ -23,6 +23,7 @@ class Dominion:
                 self.players = []
                 self.winning_player_number = None
                 self.over = False
+                self.margin = None
 
         self.game_info = GameInformation()
         self.table = self.game_info.table # Convenience
@@ -110,10 +111,12 @@ class Dominion:
 
         scores = [player.compute_score() for player in self.players]
         idx = np.argmax(scores)
+        margin = abs(scores[1] - scores[0]) # NOTE: assumes 2-player game
         game_log.add_message('{} won with a score of {}'.format(self.players[idx].name, scores[idx]))
         
         self.game_info.over = True
         self.game_info.winning_player_number = idx + 1
+        self.game_info.margin = margin
 
         for player in self.players:
             player.reflect() # End of game reflection/terminal state

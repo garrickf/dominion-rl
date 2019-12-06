@@ -30,7 +30,7 @@ def manual_cmd_str(name, desc, n_iters, test_every):
     Returns a string representation of the manual command to run an experiment
     with given parameters.
     """
-    format_str = 'python learn_dominion.py {}{} --niters {} --testevery {}'
+    format_str = 'python learn_dominion.py --name {}{} --niters {} --testevery {}'
     comment = ' -m "{}"'.format(desc) if desc else ''
     return format_str.format(name, comment, n_iters, test_every)
 
@@ -81,7 +81,7 @@ def parse_args():
     Parse command line arguments.
     """
     parser = argparse.ArgumentParser(description='Run Dominon learning experiment.')
-    parser.add_argument('name', help='experiment name')
+    parser.add_argument('--name', help='experiment name')
     parser.add_argument('-m, --message', default='', dest='message', help='comments on experiment/description')
     parser.add_argument('-i', '--interactive', action='store_true', help='setup experiment in interactive mode')
     parser.add_argument('--niters', type=int, default=100, help='number of iterations to train for')
@@ -182,7 +182,7 @@ def run_experiment(settings):
     niters = settings['niters']
     test_every = settings['testevery']
     path = settings['path']
-    testiters = 100
+    testiters = 10
     # TODO: add verbose, cache every (?), log games on test (?), discount (?)
 
     # Create QLearningPolicy
@@ -197,6 +197,7 @@ def run_experiment(settings):
         Helper to run_experiment that computes the win rate of the current policy
         against another computer opponent.
         """
+        print('Testing...')
         policy.set_train(False)
         wins = 0
         tick = time.time()
@@ -205,7 +206,7 @@ def run_experiment(settings):
             players = [ComputerPlayer(1, policy=policy), ComputerPlayer(2, policy=RandomPolicy())]
             game = Dominion(with_players=players, silence_output=True)
             winner_idx, scores = game.play()
-            # print(winner_idx, scores)
+            print('win idx:', winner_idx, scores)
             if winner_idx == 0:
                 wins += 1
                 write_game_log(path, game.get_log(), train_iter, 'win')

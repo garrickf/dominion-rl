@@ -2,6 +2,8 @@ from card import *
 from collections import OrderedDict as ordereddict
 import numpy as np
 
+np.random.seed(1)
+
 # Flip to True to test all cards.
 DEBUG = False
 

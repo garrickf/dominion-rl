@@ -31,17 +31,33 @@ class ComputerPlayer(Player):
 
 
     def reflect(self):
+        """
+        Method which updates the policy installed given recent experiences. 
+        Policies (and their associated models) are responsible for collecting
+        experiences and training themselves with the command update_weights.
+        """
         reward = self.get_reward()
         raw_state = self.extract_raw_state()
-        self.policy.get_next_action([None], raw_state, reward=reward) # Only one action: we won
-        # print(self.policy.get_weights())
+        self.policy.get_next_action([None], raw_state, reward=reward) # Actions don't matter: we won
+
+        self.policy.update_weights() # Reflect on game experience
 
 
-    # TODO: make a player function that experiences reward, and feed that to the computer player
     def get_reward(self):
+        """
+        Helper function to assign reward given game state. Most reward is sparse:
+        it is assigned at the end of the game. The player receives the most reward
+        for simply winning; an addition bonus is given for the margin by which the
+        player wins; this hopefully incentivizes trouncing, but not too much that
+        it becomes hubris.
+        """
         reward = 0
-        if self.game.over and self.player_number == self.game.winning_player_number:
-            reward = 100
+        if self.game.over:
+            if self.player_number == self.game.winning_player_number:
+                reward = 100 + self.game.margin * 10
+                print('Player {} won, reward of {}'.format(self.player_number, reward))
+            else:
+                reward = -100 - self.game.margin * 10
         
         # TODO: other heuristic rewards can be added here
 
