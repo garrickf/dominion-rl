@@ -1,0 +1,21 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Related Work}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Reinforcement Learning and Deep RL}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Game-Playing with RL}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Problem and Approach}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{The Game of Dominion}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{Game Engine}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.3}{Modeling Dominion}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.4}{Problems with Perceptron}{section.3}% 9
+\BOOKMARK [2][-]{subsection.3.5}{Deep Learning Architecture}{section.3}% 10
+\BOOKMARK [3][-]{subsubsection.3.5.1}{Basic Idea}{subsection.3.5}% 11
+\BOOKMARK [3][-]{subsubsection.3.5.2}{More Technical Notes}{subsection.3.5}% 12
+\BOOKMARK [1][-]{section.4}{Experiments and Results}{}% 13
+\BOOKMARK [2][-]{subsection.4.1}{Overview of Experiments}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.2}{Learner vs. Random}{section.4}% 15
+\BOOKMARK [2][-]{subsection.4.3}{Genetic-Style ``Bracket'' of Learners}{section.4}% 16
+\BOOKMARK [2][-]{subsection.4.4}{Iterative Self-Play}{section.4}% 17
+\BOOKMARK [1][-]{section.5}{Discussion}{}% 18
+\BOOKMARK [1][-]{section.6}{Conclusion}{}% 19
+\BOOKMARK [1][-]{section.7}{Attribution}{}% 20
+\BOOKMARK [1][-]{section*.2}{References}{}% 21
