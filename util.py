@@ -1,8 +1,26 @@
 import sys
 from colorama import Fore, Back, Style
+import re
 
 def sparseDot(v, w):
     return sum(v[k] * w[k] for k in set(v.keys()) & set(w.keys()))
+
+
+# 7-bit C1 ANSI sequences
+ansi_escape = re.compile(r'''
+    \x1B    # ESC
+    [@-_]   # 7-bit C1 Fe
+    [0-?]*  # Parameter bytes
+    [ -/]*  # Intermediate bytes
+    [@-~]   # Final byte
+''', re.VERBOSE)
+def strip_style(text):
+    """
+    Adapted from Stack Overflow: 
+    https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
+    """
+    return ansi_escape.sub('', text)
+
 
 def get_integer(prompt):
     typed = input(prompt)

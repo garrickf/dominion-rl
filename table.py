@@ -2,8 +2,11 @@ from card import *
 from collections import OrderedDict as ordereddict
 import numpy as np
 
-# Flip to True to test all cards.
+np.random.seed(1)
+
+# Flip debug to True to test all cards.
 DEBUG = False
+FIXED = True
 
 class Table:
     def __init__(self, num_players):
@@ -16,6 +19,8 @@ class Table:
 
         if DEBUG:
             kingdom = KINGDOM_CARDS
+        if FIXED:
+            kingdom = [CHAPEL, BANDIT, WITCH, MARKET, VILLAGE, SMITHY, MINE, MERCHANT, WORKSHOP, CELLAR]
 
         self.kingdom = kingdom
         
