@@ -1,11 +1,10 @@
 # Dominion!
 
-To run a game and test: `python game.py`
+> Final project developed for CS238: Decision Making Under Uncertainty, Autumn 2019, by @garrickf and @andersonbcdefg.
 
-## TODO
+Presents a game simulator for the deck-building game *Dominion* (built in Python) and a deep reinforcement learning algorithm which develops strategies for the game (written in Keras/Python).
 
-- Create a computer class that wraps around the player and can override inputs with its own policy and extract state information and valid action space information.
-- Actions are relatively uniform when purchasing cards, but not in the middle of playing some actions. This is something to consider. (For example, the action space of a Mine when you have no treasure in your hand is only to abort the action! These 'worthless' plays ought to be penalized in some way.)
+Read our paper [here!](http://stanford.edu/~banders9/dominion.pdf)
 
 ## Setting up dependencies
 
@@ -30,13 +29,36 @@ python learn_dominion.py -i
 and you'll be taken through a series of questions to set up your experiment and the variables/hyperparameters therein. Interactive mode will tell you how to run those experiments again using just the CLI; for those of you who want to skip ahead:
 
 ```
-usage: learn_dominion.py [-h] [-i]
+usage: learn_dominion.py [-h] [--name NAME] [-m, --message MESSAGE] [-i]
+                         [--niters NITERS] [--testevery TESTEVERY]
+                         [--levels LEVELS]
 
 Run Dominon learning experiment.
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -i, --interactive  setup experiment in interactive mode
+  -h, --help            show this help message and exit
+  --name NAME           experiment name
+  -m, --message MESSAGE
+                        comments on experiment/description
+  -i, --interactive     setup experiment in interactive mode
+  --niters NITERS       number of iterations to train for
+  --testevery TESTEVERY
+                        how often to test the policy
+  --levels LEVELS       number of CPU levels to train against, tournament-
+                        style
 ```
+
+## Playing a game of Dominion
+
+To play Dominion against a computer agent, run
+
+```shell
+python game.py [weightfile]
+```
+
+where `weightfile` is the path to a weightfile that gets loaded into the neural
+network.
+
+> 2-player human games, fixed and random policies coming soon...
 
 ## More Documention coming soon...
