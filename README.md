@@ -62,3 +62,13 @@ network.
 > 2-player human games, fixed and random policies coming soon...
 
 ## More Documention coming soon...
+
+## New notes
+
+To run unit tests, use:
+
+```zsh
+python -m pytest
+```
+
+Tests are located in the `/tests` directory.

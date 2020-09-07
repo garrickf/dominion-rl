@@ -3,11 +3,10 @@
 
 from abc import ABC, abstractmethod
 from dominion.prettyprint import hand_to_str, table_to_str
-from dominion.players import get_playable_actions_as_options, get_purchasable_cards_as_options
-from .common import DeckPile
+from .common import DeckPile, CardType
 
 
-""" Functions that specifically edit the game context
+""" Helper functions that specifically edit the game context
 """
 def get_num_events(ctx, target):
     """ Assumes the event passed is sourced from itself
@@ -27,6 +26,26 @@ def clear_events_ahead_of_self(ctx, target):
         if type(event).__name__ != type(target).__name__:
             ctx.event_queue = ctx.event_queue[idx:]
             return
+
+""" Helper functions for getting options
+"""
+def get_playable_actions_as_options(cards):
+    """ Takes a list of cards and returns a dict from index to string option
+    """
+    options = {}
+    for idx, card in enumerate(cards):
+        if card.kind == CardType.ACTION:
+            options[idx] = card.name
+    return options
+
+
+def get_purchasable_cards_as_options(table, player):
+    options = {}
+    for idx, card in enumerate(table):
+        left = table[card]
+        if card.cost <= player.treasure and left > 0:
+            options[idx] = card.name
+    return options
 
 class Event:
     def __init__(self, *, target):
