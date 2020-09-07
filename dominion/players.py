@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import random  # For shuffle
 from collections import defaultdict
 from dominion.cards.base_game import ESTATE, COPPER
-from dominion.common import DeckPile, PlayerType
+from dominion.common import DeckPile, PlayerType, CardType
 from dominion.controller import Controller
 
 STARTER_DECK = [ESTATE] * 3 + [COPPER] * 7
@@ -78,6 +78,7 @@ class Deck:
             raise ValueError('to_pile not of type DeckPile')
         self._update_counts()
 
+    # TODO: for more precision, allow move by index
     def move(self, cards, *, from_pile, to_pile, to_pos='TOP'):
         """ Move list of cards from one pile to another. Preserves overall deck 
         counts. Only moves to the top of the destination pile.
@@ -107,11 +108,30 @@ class Player(ABC):
     def __init__(self, name):
         self.name = name
         self.deck = Deck()
+        self.modifiers = {}
 
     @property
     def hand(self):
         """ Shorthand property for the player's hand."""
         return self.deck.hand
+
+    @property
+    def treasure(self):
+        """ How much treasure the player has on hand."""
+        total = 0
+        for card in self.hand:
+            if card.kind == CardType.TREASURE:
+                total += card.value
+
+        # TODO: account for boons
+
+        if 'spent' in self.modifiers:
+            total -= self.modifiers['spent']
+
+        return total
+
+    def reset_modifiers(self):
+        self.modifiers = {}
 
     @abstractmethod
     def get_input(self, prompt, options, allow_skip=False):
@@ -125,9 +145,15 @@ class HumanPlayer(Player):
         self.controller = Controller()
 
     def get_input(self, prompt, options, allow_skip=False):
+        """
+        @param options (dict): Number -> String option
+        """
         return self.controller.get_input(prompt,
                                          options,
                                          allow_skip=allow_skip)
+
+    def show(self, text):
+        print(text)
 
 
 # Need to subclass the ComputerPlayer with an appropriate learn method and policy
@@ -139,3 +165,22 @@ class ComputerPlayer(Player):
     @abstractmethod
     def reflect(self):
         pass
+
+
+def get_playable_actions_as_options(cards):
+    """ Takes a list of cards and returns a dict from index to string option
+    """
+    options = {}
+    for idx, card in enumerate(cards):
+        if card.kind == CardType.ACTION:
+            options[idx] = card.name
+    return options
+
+
+def get_purchasable_cards_as_options(table, player):
+    options = {}
+    for idx, card in enumerate(table):
+        left = table[card]
+        if card.cost <= player.treasure and left > 0:
+            options[idx] = card.name
+    return options

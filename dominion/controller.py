@@ -36,10 +36,12 @@ def fuzzy_text_match(text, options):
     """
     # Format options and text
     text = text.lower()
-    options = [s.lower() for s in options]
-    dists = [levenshtein_dist(text, s) for s in options]
+    keys, values = [k for k in options], [v.lower() for v in options.values()]
+
+    dists = [levenshtein_dist(text, s) for s in values]
     best_idx = dists.index(min(dists))
-    return best_idx, dists[best_idx]
+
+    return keys[best_idx], dists[best_idx]
 
 
 def validator_from_options(options):
@@ -53,22 +55,22 @@ def validator_from_options(options):
         """
         if user_input.raw.isdigit():
             n = user_input.clean = int(user_input.raw)
-            if n >= 0 and n < len(options):
+            if n in options:
                 user_input.valid = True
                 return
             else:
-                user_input.err = 'Number out of range, try again.'
+                user_input.err = 'Invalid number, try again.'
                 return
         else:
             # Try fuzzy matching the string
-            best_idx, edit_dist = fuzzy_text_match(user_input.raw, options)
+            best_key, edit_dist = fuzzy_text_match(user_input.raw, options)
 
             if edit_dist == 0:
-                user_input.clean = best_idx
+                user_input.clean = best_key
                 user_input.valid = True
                 return
             elif edit_dist <= 2:
-                user_input.err = 'Did you mean "{}"?'.format(options[best_idx])
+                user_input.err = 'Did you mean "{}"?'.format(options[best_key])
                 return
             else:
                 user_input.err = 'Invalid input, try again.'
@@ -84,9 +86,11 @@ class Controller:
     def get_input(self, prompt, options, allow_skip=False):
         """ Prompts user for input and returns it as an integer choice from the 
         list options. Allows user to type strings or integers.
+
+        @param options (dict): Dictionary of int options to str labels
         """
         if allow_skip:
-            options.append('Skip')
+            options[-1] = 'Skip'
 
         c = get_line(prompt, validator=validator_from_options(options))
         return c

@@ -59,5 +59,5 @@ class ActionCard(Card):
         super().__init__(name=name, kind=CardType.ACTION, cost=cost, desc=desc)
 
     @abstractmethod
-    def play(self, by, game_ctx):
+    def play(self, game_ctx, player):
         pass

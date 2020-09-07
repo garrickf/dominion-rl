@@ -10,4 +10,16 @@ from .gardens import GARDENS
 from .curse import CURSE
 from .village import VILLAGE
 
-KINGDOM_CARDS = []
+KINGDOM_CARDS = [
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+    VILLAGE,
+]

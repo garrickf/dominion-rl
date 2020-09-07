@@ -4,6 +4,8 @@
 from colorama import Fore, Back, Style
 from dominion.common import CardType
 
+# TODO: with dim style
+
 TREASURE_TO_COLOR = {
     'Copper': Fore.RED,
     'Silver': Fore.WHITE,
@@ -41,4 +43,15 @@ def deck_to_str(deck):
         s += '[{:>2}] {!s:<23}'.format(v, card_to_str(card))
     return s + '\n'
 
+
 # TODO: method for string player name, numbered choices, etc.
+
+
+def table_to_str(table):
+    s = "Table:\n"
+    s = '{:<4}{:<14}{:<5}{:<7}{:<}\n'.format('', 'Name', 'Left', 'Cost',
+                                             'Description')
+    for i, (card, left) in enumerate(table.items()):
+        s += '{:>2}. {!s:<22} [{:>2}] ({:>2}) | {}\n'.format(
+            i, card_to_str(card), left, card.cost, card.desc)
+    return s
