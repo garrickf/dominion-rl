@@ -16,3 +16,14 @@ class CardType(Enum):
     TREASURE = auto()
     ACTION = auto()
     CURSE = auto()
+
+
+class DeckPile(Enum):
+    DRAW = auto()
+    DISCARD = auto()
+    HAND = auto()
+
+
+class PlayerType(Enum):
+    HUMAN = auto()
+    COMPUTER = auto()

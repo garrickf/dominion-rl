@@ -20,10 +20,9 @@ class Card(ABC):
         self.description = desc
 
     def __str__(self):
+        """ Returns a string representation of the card; useful during gameplay.
         """
-        Prints a string represenation of the card; useful during gameplay.
-        """
-        return f'[Card: %s]' % (self.name)
+        return '[{}]'.format(self.name)
 
     @property
     def desc(self):
