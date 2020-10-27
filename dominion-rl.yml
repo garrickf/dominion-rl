@@ -8,3 +8,5 @@ dependencies:
   - colorama
   - yapf
   - pytest
+  - pylint
+  - black
