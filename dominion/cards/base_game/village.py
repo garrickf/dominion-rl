@@ -10,7 +10,7 @@ class VillageEvent(Event):
 
 class Village(ActionCard):
     def __init__(self):
-        super().__init__(name='Village', cost=2, desc='+1 card. +2 actions.')
+        super().__init__(name="Village", cost=2, desc="+1 card. +2 actions.")
 
     def play(self, game_ctx, player):
         events = [
