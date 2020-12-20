@@ -1,9 +1,10 @@
 """ Game object TODO: docstring
 """
 
-from dominion.common import *
 import dominion.events as events
-from dominion.players import HumanPlayer, ComputerPlayer
+from dominion.common import *
+from dominion.players import ComputerPlayer, HumanPlayer
+
 from .table import Table
 
 # Game context stores order for players
@@ -20,16 +21,14 @@ class GameContext:
             self.add_event(events.SetupEvent(target=player_name))
 
     def add_event(self, event, where=QueuePosition.BACK):
-        """ Adds a list of events to the queue...
-        """
+        """Adds a list of events to the queue..."""
         if where == QueuePosition.BACK:
             self.event_queue.append(event)
         elif where == QueuePosition.FRONT:
             self.event_queue.insert(0, event)
 
     def add_events(self, events, where=QueuePosition.BACK):
-        """ Adds a list of events to the queue...
-        """
+        """Adds a list of events to the queue..."""
         if where == QueuePosition.BACK:
             self.event_queue = self.event_queue + events
         elif where == QueuePosition.FRONT:
@@ -45,31 +44,35 @@ class GameContext:
 
         return self.event_queue.pop(0)
 
+    def get_other_players(self, cur_player):
+        """Goes around the circle of player_order, returning all other players"""
+        idx = self.player_order.index(cur_player)
+        return self.player_order[idx + 1 :] + self.player_order[:idx]
+
     def reached_end(self):
-        return False
+        return False  # TODO: add actual stopping condition
 
 
 class Game:
-    """ Game objects manage a GameContext and multiple Controllers.
-    """
+    """Game objects manage a GameContext and multiple Controllers."""
+
     def __init__(self):
         # Initialize players
         players = []
         player_types = [PlayerType.HUMAN, PlayerType.HUMAN]
         for idx, player_type in enumerate(player_types):
             if player_type == PlayerType.HUMAN:
-                player_name = 'player{}'.format(idx)
+                player_name = "player{}".format(idx)
                 player = HumanPlayer(player_name)
             if player_type == PlayerType.COMPUTER:
-                player_name = 'player{} (CPU)'.format(idx)
+                player_name = "player{} (CPU)".format(idx)
                 player = ComputerPlayer(player_name)
             players.append(player)
 
         self.name_to_player = {player.name: player for player in players}
 
         # Create GameContext
-        self.ctx = GameContext(
-            player_names=[player.name for player in players])
+        self.ctx = GameContext(player_names=[player.name for player in players])
 
     def play(self):
         # While game not finished
@@ -79,4 +82,4 @@ class Game:
             event = self.ctx.get_next_event()
             # Get player and controller
             player = self.name_to_player[event.target]
-            event.forward(self.ctx, player)
+            event(self.ctx, player)

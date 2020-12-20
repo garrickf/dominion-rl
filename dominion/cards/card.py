@@ -19,6 +19,9 @@ class Card(ABC):
         self.cost = cost
         self.description = desc
 
+        self.vp = None
+        self.value = None
+
     def __str__(self):
         """Returns a string representation of the card; useful during gameplay."""
         return "[{}]".format(self.name)
@@ -53,4 +56,7 @@ class ActionCard(Card):
 
     @abstractmethod
     def play(self, game_ctx, player):
+        """ Scripts what is done when the card is played. Typically, events are
+        added for one or more players.
+        """
         pass
