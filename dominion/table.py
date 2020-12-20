@@ -54,15 +54,17 @@ class Table():
     def __getitem__(self, index):
         return self.table.__getitem__(index)
 
-    def buy(self, idx, buyer):
+    def buy(self, idx, buyer, free=False):
         """ Buys and transfers card to buyer (Player object)."""
         card = list(self.table.keys())[idx]
         
         self.table[card] -= 1
         buyer.deck.add([card])
+
+        if free:
+            return card
         
         if 'spent' not in buyer.modifiers:
             buyer.modifiers['spent'] = 0
         buyer.modifiers['spent'] += card.cost
-        
         return card
