@@ -1,9 +1,12 @@
-""" Player objects TODO: add docstring
+""" Player objects contain player metadata and convenience methods for other
+classes to manipulate that data.
 """
 
 from abc import ABC, abstractmethod
-from dominion.common import PlayerType, CardType
+
+from dominion.common import CardType, PlayerType
 from dominion.controller import Controller
+
 from .deck import Deck
 
 
@@ -45,6 +48,8 @@ class Player(ABC):
 
     @abstractmethod
     def get_input(self, prompt, options, allow_skip=False):
+        """ Each Player subclass must implement this method.
+        """
         pass
 
 
@@ -61,6 +66,7 @@ class HumanPlayer(Player):
         return self.controller.get_input(prompt, options, allow_skip=allow_skip)
 
     def show(self, text):
+        # TODO: incorporate with logging: to player, and to display, but not to game
         print(text)
 
 
