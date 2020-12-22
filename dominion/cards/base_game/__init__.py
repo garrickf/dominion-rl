@@ -7,7 +7,9 @@ from .estate import ESTATE
 from .gardens import GARDENS
 from .gold import GOLD
 from .mine import MINE
+from .moneylender import MONEYLENDER
 from .province import PROVINCE
+from .remodel import REMODEL
 from .silver import SILVER
 from .village import VILLAGE
 

@@ -1,4 +1,5 @@
-"""Card class TODO: docstring
+"""All cards in the game subclass Card, which collects the common properties of
+all cards and presents a unified interface for working with them. 
 """
 
 from abc import ABC, abstractmethod
@@ -9,10 +10,11 @@ class Card(ABC):
     def __init__(self, *, name, kind, cost, desc=""):
         """Constructs a card.
 
-        @param name (str): The card's name
-        @param kind (dominion.common.CardType) Card type
-        @param cost (int): Treasure cost of the card
-        @param desc (str): Description on the card, if written
+        Args: 
+            name (str): The card's name.
+            kind (dominion.common.CardType) Card type.
+            cost (int): Treasure cost of the card.
+            desc (str): Description on the card, if written. Otherwise, empty.
         """
         self.name = name
         self.kind = kind

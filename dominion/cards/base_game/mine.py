@@ -37,11 +37,11 @@ class MineEvent(Event):
         options = get_treasures_as_options(player.hand)
         if not options:
             player.show("No treasures are available to trash.\n")
-            # If there are any other PlayActionEvents, clear them
+            # If there are any other Events like this one, clear them
             clear_events_ahead_of_self(game_ctx, self)
             return
 
-        prompt_str = "You may trash a treasure from your hand."
+        prompt_str = "Choose a treasure to trash from your hand"
         c = player.get_input(prompt_str, options, allow_skip=True)
         if c == "Skip":
             return
@@ -53,7 +53,7 @@ class MineEvent(Event):
         options = get_eligible_treasures_as_options(game_ctx.table, new_value)
 
         player.show(options_to_str(options))
-        prompt_str = f"You may gain a treasure costing up to ({new_value})"
+        prompt_str = f"Gain a treasure to costing up to ({new_value})"
         c = player.get_input(prompt_str, options, allow_skip=True)
         if c == "Skip":
             return

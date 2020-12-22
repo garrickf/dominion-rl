@@ -68,9 +68,9 @@ def options_to_str(options):
 
 def table_to_str(table):
     s = "Table:\n"
-    s += "{:<4}{:<14}{:<5}{:<7}{:<}\n".format("", "Name", "Left", "Cost", "Description")
+    s += "{:<4}{:<16}{:<5}{:<7}{:<}\n".format("", "Name", "Left", "Cost", "Description")
     for i, (card, left) in enumerate(table.items()):
-        s += "{:>2}. {!s:<22} [{:>2}] ({:>2}) | {}\n".format(
+        s += "{:>2}. {!s:<24} [{:>2}] ({:>2}) | {}\n".format(
             i, card_to_str(card), left, card.cost, card.desc
         )
     return s

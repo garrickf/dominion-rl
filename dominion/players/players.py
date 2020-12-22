@@ -40,7 +40,7 @@ class Player(ABC):
     def reset_modifiers(self):
         self.modifiers = {}
 
-    def set_modifier(self, key, *, func, default=0):
+    def set_modifier(self, key, func, default=0):
         if key not in self.modifiers:
             self.modifiers[key] = default
 
