@@ -1,5 +1,5 @@
 """All cards in the game subclass Card, which collects the common properties of
-all cards and presents a unified interface for working with them. 
+all cards and presents a unified interface for working with them.
 """
 
 from abc import ABC, abstractmethod
@@ -10,7 +10,7 @@ class Card(ABC):
     def __init__(self, *, name, kind, cost, desc=""):
         """Constructs a card.
 
-        Args: 
+        Args:
             name (str): The card's name.
             kind (dominion.common.CardType) Card type.
             cost (int): Treasure cost of the card.
@@ -58,7 +58,7 @@ class ActionCard(Card):
 
     @abstractmethod
     def play(self, game_ctx, player):
-        """ Scripts what is done when the card is played. Typically, events are
+        """Scripts what is done when the card is played. Typically, events are
         added for one or more players.
         """
         pass

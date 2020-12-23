@@ -68,6 +68,11 @@ class Deck:
         """
         if to_pile == DeckPile.DISCARD:
             self.discard_pile += cards
+        elif to_pile == DeckPile.HAND:
+            self.hand += cards
+        elif to_pile == DeckPile.DRAW:
+            # Add to top of draw pile
+            self.draw_pile = cards + self.draw_pile
         elif isinstance(to_pile, DeckPile):
             raise NotImplementedError('Not implemented')
         else:
@@ -75,13 +80,11 @@ class Deck:
         self._update_counts()
 
     # TODO: for more precision, allow move by index
+    # Used for discards as well
     def move(self, cards, *, from_pile, to_pile, to_pos='TOP'):
         """ Move list of cards from one pile to another. Preserves overall deck 
         counts. Only moves to the top of the destination pile.
         """
-        if to_pos != 'TOP':
-            raise NotImplementedError('Not implemented')
-
         ENUM_TO_PILE = {
             DeckPile.DISCARD: self.discard_pile,
             DeckPile.DRAW: self.draw_pile,
@@ -95,6 +98,12 @@ class Deck:
             if card not in from_pile:
                 raise RuntimeError('Desired card not found in from_pile')
             from_pile.remove(card)
-            to_pile.insert(0, card)
+            
+            if to_pos == 'TOP':
+                to_pile.insert(0, card)
+            elif to_pos == 'BOTTOM':
+                to_pile.append(card)
+            else:
+                raise NotImplementedError('Not implemented')
 
         # TODO: allow int indexing as well as passing a list of names

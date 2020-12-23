@@ -6,7 +6,9 @@ from collections import OrderedDict
 
 import numpy as np
 
+from dominion.common import DeckPile
 from .cards.base_game import *
+from .cards import Card
 
 np.random.seed(1)
 
@@ -68,7 +70,7 @@ class Table:
     def __getitem__(self, index):
         return self.table.__getitem__(index)
 
-    def buy(self, idx, buyer, free=False):
+    def buy(self, target, buyer, free=False, to_pile=DeckPile.DISCARD):
         """Buys and transfers card to buyer. If free=False, modifies the player
         object with the amount the player has spent so far. Currently, does no
         error checking for the amount of treasures the player posesses.
@@ -79,10 +81,15 @@ class Table:
             free (bool, optional): Whether or not the transaction is free.
                 Defaults to False.
         """
-        card = list(self.table.keys())[idx]
+        if isinstance(target, int):
+            card = list(self.table.keys())[target]
+        elif isinstance(target, Card):
+            card = target
+        else:
+            raise RuntimeError(f"target should be int or card, got {type(target).__name__}")
 
         self.table[card] -= 1
-        buyer.deck.add([card])
+        buyer.deck.add([card], to_pile=to_pile)
 
         if free:
             return card

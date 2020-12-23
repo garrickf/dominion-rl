@@ -70,6 +70,12 @@ def get_all_as_options(cards):
 
 class Event(ABC):
     def __init__(self, target):
+        """ TODO: docstring
+
+        Args:
+            target (str): The string name of the player the event acts on. TODO: allow/
+                change to Player object
+        """
         self.target = target
 
     @abstractmethod

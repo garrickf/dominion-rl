@@ -1,5 +1,4 @@
-""" Common structures TODO: docstring
-"""
+"""Common Enum types used throughout Dominion."""
 
 from enum import Enum, auto
 
@@ -15,6 +14,8 @@ class CardType(Enum):
     VICTORY = auto()
     TREASURE = auto()
     ACTION = auto()
+    ACTION_ATTACK = auto()
+    ACTION_REACTION = auto()
     CURSE = auto()
 
 
