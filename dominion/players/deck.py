@@ -5,6 +5,7 @@ import random  # For shuffle
 from collections import defaultdict
 from dominion.common import DeckPile
 from dominion.cards.base_game import STARTER_DECK
+from dominion.cards import Card
 
 
 class Deck:
@@ -19,7 +20,7 @@ class Deck:
         return sum([v for v in self.counts.values()])
 
     def _reshuffle(self):
-        """ Helper method that shuffles the discard pile back into the draw 
+        """Helper method that shuffles the discard pile back into the draw
         pile.
         """
         random.shuffle(self.discard_pile)
@@ -35,8 +36,7 @@ class Deck:
         self.discard_pile += cards
 
     def draw_cards(self, n=1, replace_hand=True):
-        """ Draw n cards, optionally replacing (discarding) cards in hand.
-        """
+        """Draw n cards, optionally replacing (discarding) cards in hand."""
         if replace_hand:
             self._discard(self.hand)
             self.hand = []
@@ -50,20 +50,20 @@ class Deck:
         return self.hand
 
     def trash(self, cards, from_pile=DeckPile.HAND):
-        """ Remove a list of cards from a specified pile. Reduces overall deck
+        """Remove a list of cards from a specified pile. Reduces overall deck
         counts.
         """
         if from_pile == DeckPile.HAND:
             for card in cards:
                 self.hand.remove(card)
         elif isinstance(from_pile, DeckPile):
-            raise NotImplementedError('Not implemented')
+            raise NotImplementedError("Not implemented")
         else:
-            raise ValueError('from_pile not of type DeckPile')
+            raise ValueError("from_pile not of type DeckPile")
         self._update_counts()
 
     def add(self, cards, to_pile=DeckPile.DISCARD):
-        """ Add list of cards to a specified pile. Increases overall deck 
+        """Add list of cards to a specified pile. Increases overall deck
         counts.
         """
         if to_pile == DeckPile.DISCARD:
@@ -74,16 +74,14 @@ class Deck:
             # Add to top of draw pile
             self.draw_pile = cards + self.draw_pile
         elif isinstance(to_pile, DeckPile):
-            raise NotImplementedError('Not implemented')
+            raise NotImplementedError("Not implemented")
         else:
-            raise ValueError('to_pile not of type DeckPile')
+            raise ValueError("to_pile not of type DeckPile")
         self._update_counts()
 
-    # TODO: for more precision, allow move by index
-    # Used for discards as well
-    def move(self, cards, *, from_pile, to_pile, to_pos='TOP'):
-        """ Move list of cards from one pile to another. Preserves overall deck 
-        counts. Only moves to the top of the destination pile.
+    def move(self, targets, *, from_pile, to_pile, to_pos="TOP"):
+        """Move list of cards from one pile to another. Preserves overall deck
+        counts.
         """
         ENUM_TO_PILE = {
             DeckPile.DISCARD: self.discard_pile,
@@ -94,16 +92,39 @@ class Deck:
         from_pile = ENUM_TO_PILE[from_pile]
         to_pile = ENUM_TO_PILE[to_pile]
 
-        for card in cards:
-            if card not in from_pile:
-                raise RuntimeError('Desired card not found in from_pile')
-            from_pile.remove(card)
-            
-            if to_pos == 'TOP':
-                to_pile.insert(0, card)
-            elif to_pos == 'BOTTOM':
-                to_pile.append(card)
-            else:
-                raise NotImplementedError('Not implemented')
+        if type(targets) is not list:
+            targets = [targets]
 
-        # TODO: allow int indexing as well as passing a list of names
+        if isinstance(targets[0], int):
+            target_idxs = targets
+        elif isinstance(targets[0], Card):
+            target_idxs = []
+            for idx, card in enumerate(from_pile):
+                if card in targets:
+                    target_idxs.append(idx)
+                    targets.remove(card)
+
+            if targets:
+                raise RuntimeError("Desired card not found in from_pile")
+        else:
+            raise RuntimeError(
+                f"target should be int or card, got {type(targets[0]).__name__}"
+            )
+
+        new_from_pile = []
+        moved = []
+        for idx, card in enumerate(from_pile):
+            if idx in target_idxs:
+                moved.append(card)
+            else:
+                new_from_pile.append(card)
+
+        # Change internal contents, not switch views
+        from_pile[:] = new_from_pile
+
+        if to_pos == "TOP":
+            to_pile[:] = to_pile + moved
+        elif to_pos == "BOTTOM":
+            to_pile[:] = moved + to_pile
+        else:
+            raise NotImplementedError("Not implemented")

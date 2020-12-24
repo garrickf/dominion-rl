@@ -17,6 +17,7 @@ from .province import PROVINCE
 from .remodel import REMODEL
 from .silver import SILVER
 from .throne_room import THRONE_ROOM
+from .vassal import VASSAL
 from .village import VILLAGE
 from .witch import WITCH
 from .workshop import WORKSHOP

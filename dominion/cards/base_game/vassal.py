@@ -1,0 +1,50 @@
+"""Vassal: +(2). Discard the top card of your deck. If it's an action, you may 
+play it.
+"""
+
+from dominion.cards import ActionCard
+from dominion.common import CardType, DeckPile, QueuePosition
+from dominion.events import Event
+from dominion.prettyprint import card_to_str, hand_to_str, options_to_str
+
+
+class VassalEvent(Event):
+    def forward(self, game_ctx, player):
+        player.set_modifier("extra_treasure", lambda v: v + 2)
+
+        top_card = player.deck.draw_pile[0]
+        if top_card.kind in [
+            CardType.ACTION,
+            CardType.ACTION,
+            CardType.ACTION_REACTION,
+        ]:
+            options = {1: top_card.name}
+            player.show(options_to_str(options))
+            prompt_str = "You may play the action"
+            c = player.get_input(prompt_str, options, allow_skip=True)
+            if c == "Skip":
+                return
+
+            top_card.play(game_ctx, player)
+
+        # TODO: debug, seems to get caught in an infinite loop here
+        print(hand_to_str(player.deck.draw_pile))
+        player.deck.move(0, from_pile=DeckPile.DRAW, to_pile=DeckPile.DISCARD)
+        print(hand_to_str(player.deck.draw_pile))
+        print("Player discards the top card of their deck.")
+
+
+class Vassal(ActionCard):
+    def __init__(self):
+        super().__init__(
+            name="Vassal",
+            cost=3,
+            desc="+(2). Discard the top card of your deck. If it's an action, you may play it.",
+        )
+
+    def play(self, game_ctx, player):
+        events = [VassalEvent(target=player.name)]
+        game_ctx.add_events(events, where=QueuePosition.FRONT)
+
+
+VASSAL = Vassal()
