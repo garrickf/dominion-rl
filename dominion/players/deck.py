@@ -35,9 +35,10 @@ class Deck:
     def _discard(self, cards):
         self.discard_pile += cards
 
-    def draw_cards(self, n=1, replace_hand=True):
-        """Draw n cards, optionally replacing (discarding) cards in hand."""
-        if replace_hand:
+    def draw_cards(self, n=1, replace_hand=True, to_caller=False):
+        """Draw n cards, optionally replacing (discarding) cards in hand. or 
+        returning cards directly."""
+        if not to_caller and replace_hand:
             self._discard(self.hand)
             self.hand = []
 
@@ -45,8 +46,14 @@ class Deck:
         if len(self.draw_pile) < n:
             self._reshuffle()
 
-        self.hand += self.draw_pile[:n]
+        drawn = self.draw_pile[:n]
         self.draw_pile = self.draw_pile[n:]
+
+        # Return cards to caller if specified; otherwise, add to hand
+        if to_caller:
+            return drawn
+
+        self.hand += drawn
         return self.hand
 
     def trash(self, cards, from_pile=DeckPile.HAND):

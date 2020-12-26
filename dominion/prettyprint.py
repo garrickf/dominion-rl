@@ -30,10 +30,7 @@ def card_to_str(card):
 
 
 def hand_to_str(hand):
-    s = "Current hand:\n"
-    for idx, card in enumerate(hand):
-        s += "{}. {}\n".format(idx, card_to_str(card))
-    return s
+    return cards_to_str(hand, header="Current hand")
 
 
 def filter_treasures_as_str(cards):
@@ -66,11 +63,34 @@ def options_to_str(options):
     return s + "\n"
 
 
-def table_to_str(table):
+def cards_to_str(cards, header="Cards"):
+    s = f"{header}:\n"
+    for idx, card in enumerate(cards):
+        s += "{}. {}\n".format(idx, card_to_str(card))
+    return s
+
+
+def table_to_str(table, max_line_len=100):
     s = "Table:\n"
     s += "{:<4}{:<16}{:<5}{:<7}{:<}\n".format("", "Name", "Left", "Cost", "Description")
     for i, (card, left) in enumerate(table.items()):
-        s += "{:>2}. {!s:<24} [{:>2}] ({:>2}) | {}\n".format(
+        line = "{:>2}. {!s:<24} [{:>2}] ({:>2}) | {}\n".format(
             i, card_to_str(card), left, card.cost, card.desc
         )
+        if len(line) > max_line_len:
+            remainder = line
+            new_lines = []
+            while len(remainder) > max_line_len:
+                split_point = remainder.find(" ", max_line_len)
+                if split_point == -1:
+                    new_lines.append(remainder)
+                    break
+                new_line = remainder[:split_point] + "\n"
+                new_lines.append(new_line)
+
+                remainder = "{:<34}{}".format("", remainder[split_point:])
+
+            new_lines.append(remainder)
+            line = "".join(new_lines)
+        s += line
     return s

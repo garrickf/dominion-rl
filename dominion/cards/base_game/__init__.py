@@ -15,6 +15,7 @@ from .moat import MOAT
 from .moneylender import MONEYLENDER
 from .province import PROVINCE
 from .remodel import REMODEL
+from .sentry import SENTRY
 from .silver import SILVER
 from .throne_room import THRONE_ROOM
 from .vassal import VASSAL
