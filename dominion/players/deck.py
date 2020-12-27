@@ -99,6 +99,10 @@ class Deck:
         from_pile = ENUM_TO_PILE[from_pile]
         to_pile = ENUM_TO_PILE[to_pile]
 
+        # If targets is an empty list
+        if type(targets) is list and not targets:
+            return
+
         if type(targets) is not list:
             targets = [targets]
 

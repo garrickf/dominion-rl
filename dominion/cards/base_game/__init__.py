@@ -22,6 +22,7 @@ from .vassal import VASSAL
 from .village import VILLAGE
 from .witch import WITCH
 from .workshop import WORKSHOP
+from .poacher import POACHER
 
 KINGDOM_CARDS = [
     VILLAGE,

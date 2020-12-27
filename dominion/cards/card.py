@@ -60,5 +60,9 @@ class ActionCard(Card):
     def play(self, game_ctx, player):
         """Scripts what is done when the card is played. Typically, events are
         added for one or more players.
+
+        Example implementation:
+            events = [MyCardEvent(target=player.name)]
+            game_ctx.add_events(events, where=QueuePosition.FRONT)
         """
         pass

@@ -83,7 +83,6 @@ def table_to_str(table, max_line_len=100):
             while len(remainder) > max_line_len:
                 split_point = remainder.find(" ", max_line_len)
                 if split_point == -1:
-                    new_lines.append(remainder)
                     break
                 new_line = remainder[:split_point] + "\n"
                 new_lines.append(new_line)
