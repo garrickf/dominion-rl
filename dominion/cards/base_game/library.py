@@ -4,7 +4,7 @@ choose to; set those aside, discarding them afterwards.
 
 # From dominion module
 from dominion.cards import ActionCard
-from dominion.common import QueuePosition, CardType, DeckPile
+from dominion.common import CardType, DeckPile, QueuePosition
 from dominion.events import Event
 from dominion.prettyprint import hand_to_str, options_to_str
 
