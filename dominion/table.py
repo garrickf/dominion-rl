@@ -1,19 +1,24 @@
 """ The table represents the collection of cards available for purchase during
 the game.
+
+TODO: rename supply to fit game language better
 """
 
+# Python stdlib
 from collections import OrderedDict
 
 import numpy as np
 
+# From dominion module
 from dominion.common import DeckPile
-from .cards.base_game import *
-from .cards import Card
 
-np.random.seed(1)
+from .cards import Card
+from .cards.base_game import *
+
+# np.random.seed(1)
 
 # Flip debug to True to test all cards.
-DEBUG = True
+DEBUG = False
 FIXED = False
 
 
