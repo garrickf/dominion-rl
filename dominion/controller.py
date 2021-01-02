@@ -1,8 +1,12 @@
-""" Controllers are hooked up to human players TODO: docstring
+"""Controllers present the human-facing interface and I/O for getting player 
+input during a game.
 """
 
 import numpy as np
+
+# From dominion module
 from input_util import get_line
+# TODO: change to from .util.input import [...]
 
 
 def levenshtein_dist(w1, w2):
@@ -12,7 +16,7 @@ def levenshtein_dist(w1, w2):
     @param w2 (String): The second string
     @return (int): The Levenstein distance between w1 and w2
     """
-    # The indices i and j are one-indexed
+    # Add an extra row/col: indices i and j are one-indexed
     dist_matrix = np.zeros((len(w1) + 1, len(w2) + 1))
 
     for i in range(len(w1) + 1):

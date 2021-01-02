@@ -1,14 +1,19 @@
-# Dominion!
+# Dominion + Reinforcement Learning
 
-> Final project developed for CS238: Decision Making Under Uncertainty, Autumn 2019, by @garrickf and @andersonbcdefg.
+> This was originally a final project developed for CS238: Decision Making Under
+> Uncertainty, Autumn 2019, by @garrickf and @andersonbcdefg. Read our paper,
+> "Playing 'Dominion' with Deep Reinforcement Learning,"
+> [here!](https://benanderson.codes/static/media/dominion.edbe2a9d.pdf)
 
-Presents a game simulator for the deck-building game *Dominion* (built in Python) and a deep reinforcement learning algorithm which develops strategies for the game (written in Keras/Python).
-
-Read our paper [here!](http://stanford.edu/~banders9/dominion.pdf)
+Presents a game simulator for the deck-building game _Dominion_ (built in
+Python) and a deep reinforcement learning algorithm which develops strategies
+for the game (written in Keras/Python).
 
 ## Setting up dependencies
 
-Some libraries like `numpy` may need installation on your machine; these dependencies are held in `requirements.txt`. One can use `venv` in Python 3 to set up a virtual environment like so:
+Some libraries like `numpy` may need installation on your machine; these
+dependencies are held in `requirements.txt`. One can use `venv` in Python 3 to
+set up a virtual environment like so:
 
 ```shell
 python3 -m venv env
@@ -16,17 +21,23 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`venv` is just the name of the environment and can be substituted for anything you want, although only `venv` is ignored in the `git` configuation for the repo. Be careful not to commit locally installed libraries!
+`venv` is just the name of the environment and can be substituted for anything
+you want, although only `venv` is ignored in the `git` configuation for the
+repo. Be careful not to commit locally installed libraries!
 
 ## Running experiments
 
-To begin running experiments, the easiest thing to do is to mock one up in interactive mode. Run:
+To begin running experiments, the easiest thing to do is to mock one up in
+interactive mode. Run:
 
 ```shell
 python learn_dominion.py -i
 ```
 
-and you'll be taken through a series of questions to set up your experiment and the variables/hyperparameters therein. Interactive mode will tell you how to run those experiments again using just the CLI; for those of you who want to skip ahead:
+and you'll be taken through a series of questions to set up your experiment and
+the variables/hyperparameters therein. Interactive mode will tell you how to run
+those experiments again using just the CLI; for those of you who want to skip
+ahead:
 
 ```
 usage: learn_dominion.py [-h] [--name NAME] [-m, --message MESSAGE] [-i]
@@ -63,12 +74,20 @@ network.
 
 ## More Documention coming soon...
 
-## New notes
+# Testing `dominion`
 
-To run unit tests, use:
+The `dominion` module implements unit tests to verify the functionality of the
+game and cards.
+
+To run these tests, from the root directory of the repository, run:
 
 ```zsh
 python -m pytest
 ```
 
 Tests are located in the `/tests` directory.
+
+# Style
+
+Python code is formatted using black. isort is used for dependency sorting.
+Prettier is used for markdown formatting.
