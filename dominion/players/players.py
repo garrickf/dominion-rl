@@ -1,9 +1,11 @@
-""" Player objects contain player metadata and convenience methods for other
+"""Player objects contain player metadata and convenience methods for other
 classes to manipulate that data.
 """
 
+# Python stdlib
 from abc import ABC, abstractmethod
 
+# From dominion module
 from dominion.common import CardType, PlayerType
 from dominion.controller import Controller
 
@@ -37,8 +39,12 @@ class Player(ABC):
 
         return total
 
-    def reset_modifiers(self):
+    def cleanup(self):
+        # Reset modifiers
         self.modifiers = {}
+
+        # Move played cards to discard
+        self.deck.cleanup()
 
     def set_modifier(self, key, func, default=0):
         if key not in self.modifiers:
@@ -48,8 +54,7 @@ class Player(ABC):
 
     @abstractmethod
     def get_input(self, prompt, options, allow_skip=False):
-        """ Each Player subclass must implement this method.
-        """
+        """Each Player subclass must implement this method."""
         pass
 
 
@@ -71,6 +76,7 @@ class HumanPlayer(Player):
 
 
 # Need to subclass the ComputerPlayer with an appropriate learn method and policy
+# TODO: add game ctx to initialization
 class ComputerPlayer(Player):
     def __init__(self, name):
         super().__init__(name)

@@ -56,12 +56,7 @@ class MilitiaEventOther(Event):
             marked_for_discard.append(c)
 
         to_discard = [player.hand[c] for c in marked_for_discard]
-        player.deck.move(
-            to_discard,
-            from_pile=DeckPile.HAND,
-            to_pile=DeckPile.DISCARD,
-            to_pos="BOTTOM",
-        )
+        player.deck.move(to_discard, from_pile=DeckPile.HAND, to_pile=DeckPile.DISCARD)
 
         player.show(hand_to_str(player.hand))
         print(

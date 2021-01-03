@@ -131,7 +131,7 @@ class PlayActionEvent(Event):
         action_card = player.hand[c]
         action_card.play(game_ctx, player)
         player.deck.move(
-            [action_card], from_pile=DeckPile.HAND, to_pile=DeckPile.DISCARD
+            [action_card], from_pile=DeckPile.HAND, to_pile=DeckPile.PLAYED
         )
 
         # TODO: Transfer to logging
@@ -183,6 +183,7 @@ class BuyEvent(Event):
         print("Player bought {}\n".format(card_to_str(card)))
 
 
+# TODO: add played cards back to discard pile
 class CleanupEvent(Event):
     def forward(self, game_ctx, player):
         """The CleanupEvent happens at the end of a player's turn. They lose any
@@ -196,7 +197,7 @@ class CleanupEvent(Event):
         Returns:
             None
         """
-        player.reset_modifiers()  # Clear spent, any status effects
+        player.cleanup()  # Clear spent, any status effects
         player.deck.draw_cards(n=5, replace_hand=True)
         player.show("Drawing 5 cards and ending turn.\n")
 

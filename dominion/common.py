@@ -1,5 +1,6 @@
 """Common Enum types used throughout Dominion."""
 
+# Python stdlib
 from enum import Enum, auto
 
 
@@ -23,6 +24,7 @@ class DeckPile(Enum):
     DRAW = auto()
     DISCARD = auto()
     HAND = auto()
+    PLAYED = auto()
 
 
 class PlayerType(Enum):

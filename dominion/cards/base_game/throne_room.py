@@ -40,7 +40,7 @@ class ThroneRoomEvent(Event):
         for _ in range(2):
             action_card.play(game_ctx, player)
         player.deck.move(
-            [action_card], from_pile=DeckPile.HAND, to_pile=DeckPile.DISCARD
+            [action_card], from_pile=DeckPile.HAND, to_pile=DeckPile.PLAYED
         )
 
         print(f"Player plays {card_to_str(action_card)} twice")
