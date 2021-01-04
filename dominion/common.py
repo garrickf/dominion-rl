@@ -25,6 +25,7 @@ class DeckPile(Enum):
     DISCARD = auto()
     HAND = auto()
     PLAYED = auto()
+    TRASH = auto()
 
 
 class PlayerType(Enum):
