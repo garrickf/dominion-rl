@@ -65,4 +65,4 @@ KINGDOM_CARDS = [
 ]
 
 # Starting deck configuration
-STARTER_DECK = [ESTATE] * 3 + [COPPER] * 7
+STARTER_DECK = (ESTATE,) * 3 + (COPPER,) * 7

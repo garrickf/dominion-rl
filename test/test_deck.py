@@ -1,5 +1,7 @@
+import pytest
+
 # From dominion module
-from dominion.cards.base_game import COPPER
+from dominion.cards.base_game import COPPER, SILVER, VILLAGE
 from dominion.common import DeckPile
 from dominion.players import Deck
 
@@ -14,7 +16,7 @@ def test_deck_init():
     assert len(deck.draw_pile) == 10, "Starting draw pile size should be 10"
 
 
-def test_deck_draw():
+def test_draw():
     # Draw a hand of 5 cards
     deck = Deck()
     hand = deck.draw_cards(n=5, replace_hand=True)
@@ -39,7 +41,7 @@ def test_deck_draw():
     assert len(deck.discard_pile) == 0, "Discard pile should be emptied"
 
 
-def test_deck_trash():
+def test_trash():
     # Draw a hand of 5 cards, then trash a Copper from hand
     deck = Deck()
     deck.draw_cards(n=5, replace_hand=True)
@@ -49,7 +51,7 @@ def test_deck_trash():
     assert len(deck) == 9, "Deck should have 9 cards"
 
 
-def test_deck_trash_indexed():
+def test_trash_indexed():
     # Draw a hand of 5 cards, then trash cards 0, 1 from hand
     deck = Deck()
     deck.draw_cards(n=5, replace_hand=True)
@@ -59,7 +61,7 @@ def test_deck_trash_indexed():
     assert len(deck) == 8, "Deck should have 8 cards"
 
 
-def test_deck_add():
+def test_add():
     # Draw a hand of 5 cards, then add a Copper to the discard pile
     deck = Deck()
     deck.draw_cards(n=5, replace_hand=True)
@@ -70,7 +72,7 @@ def test_deck_add():
     assert len(deck.discard_pile) == 2, "Discard should have 2 new cards"
 
 
-def test_deck_move():
+def test_move():
     # Draw a hand of 5 cards, then move a Copper to the top of the discard pile
     deck = Deck()
     deck.draw_cards(n=5, replace_hand=True)
@@ -82,7 +84,7 @@ def test_deck_move():
     assert deck.discard_pile[0] == COPPER, "Copper should be at top of discard"
 
 
-def test_deck_move_indexed():
+def test_move_indexed():
     # Draw a hand of 5 cards, then move cards 2, 3, 4 to the top of the discard pile
     deck = Deck()
     deck.draw_cards(n=5, replace_hand=True)
@@ -91,3 +93,52 @@ def test_deck_move_indexed():
     assert len(deck.hand) == 2, "Hand should have 2 cards"
     assert len(deck) == 10, "Deck should have 10 cards"
     assert len(deck.discard_pile) == 3, "Discard should have 3 new cards"
+
+
+def test_move_card_not_found():
+    # Draw a hand of 5 cards, then attempt to move a Silver
+    deck = Deck()
+    deck.draw_cards(5)
+    with pytest.raises(RuntimeError):
+        deck.move(SILVER, from_pile=DeckPile.HAND, to_pile=DeckPile.DRAW)
+
+
+def test_draw_to_caller():
+    # Draw 3 cards to the caller, removing them temporarily from the deck
+    deck = Deck()
+    cards = deck.draw_cards(3, to_caller=True)
+
+    assert len(cards) == 3, "There should be 3 drawn cards"
+    assert len(deck) == 7, "Deck should have 7 cards"
+
+    # Add one card back
+    cards = cards[:1]
+    deck.add(cards)
+    assert len(deck) == 8, "Deck should have 8 cards"
+
+
+def test_cleanup():
+    # Draw cards to hand, move them to played, then cleanup, moving played cards
+    # to discard
+    deck = Deck(starter_deck=[VILLAGE, VILLAGE])
+    deck.draw_cards(2)
+    deck.move([VILLAGE] * 2, from_pile=DeckPile.HAND, to_pile=DeckPile.PLAYED)
+
+    assert len(deck) == 2, "Deck should have 2 cards"
+    assert len(deck.played_cards) == 2, "Deck should have 2 played cards"
+    assert len(deck.discard_pile) == 0, "Discard pile should be empty"
+
+    deck.cleanup()
+    assert len(deck) == 2, "Deck should have 2 cards"
+    assert len(deck.discard_pile) == 2, "Discard pile should have 2 cards"
+    assert len(deck.played_cards) == 0, "Deck should have no played cards"
+
+
+def test_move_empty():
+    # Move nothing, nothing should happen
+    deck = Deck()
+    deck.draw_cards(5)
+
+    deck.move([], from_pile=DeckPile.HAND, to_pile=DeckPile.TRASH)
+    assert len(deck.hand) == 5, "Should have hand of 5 cards"
+    assert len(deck) == 10, "Should have deck of 10 cards"

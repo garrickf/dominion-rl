@@ -9,22 +9,23 @@ cleanup).
 # Python stdlib
 import random  # For shuffle
 from collections import defaultdict
-from typing import Sequence, Union
+from typing import List, Sequence, Union
 
 # From dominion module
 from dominion.cards import Card
 from dominion.cards.base_game import STARTER_DECK
 from dominion.common import DeckPile
 
+# target can be a list of ints or Cards, int, or Card
 Targets = Union[Sequence[Union[int, Card]], int, Card]
 
 
 class Deck:
-    def __init__(self, *, starter_deck=STARTER_DECK):
+    def __init__(self, *, starter_deck: Sequence[Card] = STARTER_DECK):
         """A Deck has a draw pile, discard pile, hand, a way to hold played cards
         during a turn, and a dict of card counts.
         """
-        self.draw_pile = starter_deck
+        self.draw_pile = list(starter_deck)
         random.shuffle(self.draw_pile)
         self.discard_pile = []
         self.hand = []
@@ -56,7 +57,9 @@ class Deck:
         self.discard_pile += self.hand
         self.hand = []
 
-    def draw_cards(self, n: int, replace_hand: bool = True, to_caller: bool = False):
+    def draw_cards(
+        self, n: int, replace_hand: bool = True, to_caller: bool = False
+    ) -> List[Card]:
         """Draw n cards, optionally replacing (discarding) cards in hand. or
         returning cards directly.
 
@@ -83,6 +86,7 @@ class Deck:
 
         # Return cards to caller if specified; otherwise, add to hand
         if to_caller:
+            self._update_counts()
             return drawn
 
         self.hand += drawn
@@ -131,22 +135,22 @@ class Deck:
         Returns:
             None
         """
-        # If targets is an empty list
-        if type(cards) is list and not cards:
+        if isinstance(cards, Card):
+            cards_arr = [cards]
+        else:
+            cards_arr = list(cards)
+
+        # If cards_arr is an empty list
+        if not cards_arr:
             return
 
-        if type(cards) is not list:
-            _cards = [cards]
-        else:
-            _cards = cards
-
         if to_pile == DeckPile.DISCARD:
-            self.discard_pile += _cards
+            self.discard_pile += cards_arr
         elif to_pile == DeckPile.HAND:
-            self.hand += _cards
+            self.hand += cards_arr
         elif to_pile == DeckPile.DRAW:
             # Add to top of draw pile
-            self.draw_pile = _cards + self.draw_pile
+            self.draw_pile = cards_arr + self.draw_pile
         else:
             raise NotImplementedError("not implemented")
         self._update_counts()
@@ -187,26 +191,26 @@ class Deck:
         from_loc = ENUM_TO_PILE[from_pile]
         to_loc = ENUM_TO_PILE[to_pile]
 
-        # If targets is an empty list
-        if type(targets) is list and not targets:
+        if isinstance(targets, Card) or isinstance(targets, int):
+            targets_arr = [targets]
+        else:
+            targets_arr = list(targets)
+
+        # If targets_arr is an empty list
+        if not targets_arr:
             return
 
-        if type(targets) is not list:
-            _targets = [targets]
-        else:
-            _targets = targets
-
-        if isinstance(_targets[0], int):
-            target_idxs = _targets
+        if isinstance(targets_arr[0], int):
+            target_idxs = targets_arr
         else:  # List of Cards
             target_idxs = []
             for idx, card in enumerate(from_loc):
-                if card in _targets:
+                if card in targets_arr:
                     target_idxs.append(idx)
-                    _targets.remove(card)
+                    targets_arr.remove(card)
 
             # If target non-empty, all card idxs not found in from pile
-            if _targets:
+            if targets_arr:
                 raise RuntimeError("desired card not found in from_pile")
 
         new_from_loc = []
