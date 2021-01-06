@@ -1,11 +1,10 @@
 """ The table represents the collection of cards available for purchase during
 the game.
-
-TODO: rename supply to fit game language better
 """
 
 # Python stdlib
 from collections import OrderedDict
+from typing import List, MutableMapping, Sequence, Union
 
 import numpy as np
 
@@ -15,38 +14,38 @@ from dominion.common import DeckPile
 from .cards import Card
 from .cards.base_game import *
 
-# np.random.seed(1)
 
-# Flip debug to True to test all cards.
-DEBUG = False
-FIXED = False
+class Supply:
+    def __init__(
+        self, n_players: int = 2, debug: bool = False, cards: Sequence[Card] = None
+    ) -> None:
+        """Creates the supply. The rules for the initial supply are as follows:
+        - All treasure cards are included. Each player starts with 7 coppers,
+          taken from the supply.
+        - 10 curses are included for a 2-player game, 20 for a 3-player game, and
+          so on
+        - For a two-player game, 8 of each victory card is placed in the supply.
+          For three or four players, 12. The three Estates players start with
+          come from the remainder in the box, *not* the supply.
 
-
-class Table:
-    def __init__(self, n_players=2):
+        Args:
+            n_players (int): The number of players in the game.
+            debug (bool): If True, puts all the cards in the supply.
+            cards (Sequence[Card]): Optional override to determine the 10 kingdom
+                cards
+        """
         # Choose 10 cards without replacement from set of all kingdom cards
-        kingdom = np.random.choice(KINGDOM_CARDS, size=10, replace=False)
+        kingdom: List[Card] = np.random.choice(KINGDOM_CARDS, size=10, replace=False)
 
-        if DEBUG:
+        if debug:
             kingdom = KINGDOM_CARDS
-        if FIXED:
-            kingdom = [
-                CHAPEL,
-                BANDIT,
-                WITCH,
-                MARKET,
-                VILLAGE,
-                SMITHY,
-                MINE,
-                MERCHANT,
-                WORKSHOP,
-                CELLAR,
-            ]
+        if cards:
+            kingdom = list(cards)
 
         self.kingdom = kingdom
 
         # Use an OrderedDict to allow indexing with a number
-        self.table = OrderedDict(
+        self.supply_piles: MutableMapping[Card, int] = OrderedDict(
             {
                 COPPER: 60 - (n_players * 7),
                 SILVER: 40,
@@ -59,7 +58,7 @@ class Table:
         )
 
         for card in kingdom:
-            self.table[card] = 10
+            self.supply_piles[card] = 10
 
     """ If the table is indexed, iterated over, or its items retrieved,
     defer to the self.table object inside. Presents an abstraction wrapper
@@ -67,36 +66,43 @@ class Table:
     """
 
     def items(self):
-        return self.table.items()
+        return self.supply_piles.items()
 
     def values(self):
-        return self.table.values()
+        return self.supply_piles.values()
 
     def __iter__(self):
-        return self.table.__iter__()
+        return self.supply_piles.__iter__()
 
     def __getitem__(self, index):
-        return self.table.__getitem__(index)
+        return self.supply_piles.__getitem__(index)
 
-    def buy(self, target, buyer, free=False, to_pile=DeckPile.DISCARD):
+    def buy(
+        self,
+        target: Union[int, Card],
+        buyer,
+        free: bool = False,
+        to_pile: DeckPile = DeckPile.DISCARD,
+    ) -> Card:
         """Buys and transfers card to buyer. If free=False, modifies the player
-        object with the amount the player has spent so far. Currently, does no
-        error checking for the amount of treasures the player posesses.
+        object with the amount the player has spent so far. Does no error checking
+        for the amount of treasures the player posesses.
 
         Args:
-            idx (int): Index of which card to buy.
+            target (int|Card): Index of which card, or the card, to buy
             buyer (Dominion.players.Player): Player object to transfer card to.
             free (bool, optional): Whether or not the transaction is free.
                 Defaults to False.
+            to_pile: (DeckPile): Which pile the purchased card should be placed in.
         """
         if isinstance(target, int):
-            card = list(self.table.keys())[target]
+            card = list(self.supply_piles.keys())[target]
         elif isinstance(target, Card):
             card = target
         else:
-            raise RuntimeError(f"target should be int or card, got {type(target).__name__}")
+            raise TypeError(f"must be int or card, not {type(target).__name__}")
 
-        self.table[card] -= 1
+        self.supply_piles[card] -= 1
         buyer.deck.add([card], to_pile=to_pile)
 
         if free:
