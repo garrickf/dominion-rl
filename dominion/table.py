@@ -69,6 +69,9 @@ class Table:
     def items(self):
         return self.table.items()
 
+    def values(self):
+        return self.table.values()
+
     def __iter__(self):
         return self.table.__iter__()
 

@@ -1,5 +1,5 @@
 """Controllers present the human-facing interface and I/O for getting player 
-input during a game.
+input during a game. They are analogous to a Policy.
 """
 
 import numpy as np
@@ -50,7 +50,7 @@ def fuzzy_text_match(text, options):
 
 
 def validator_from_options(options, allow_skip):
-    """Creates validator that take in Input object, cleans, and validates it.
+    """Creates validator that takes in Input object, cleans, and validates it.
     See input_util.py for more on how the validator object is used.
     """
 

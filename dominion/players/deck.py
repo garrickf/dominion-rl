@@ -221,7 +221,7 @@ class Deck:
             else:
                 new_from_loc.append(card)
 
-        # Change internal contents, not switch views
+        # Change internal contents by assigning to the *elements* of the list
         from_loc[:] = new_from_loc
 
         if to_pos == "TOP":

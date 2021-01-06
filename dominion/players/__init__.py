@@ -1,2 +1,2 @@
 from .deck import Deck
-from .players import HumanPlayer, ComputerPlayer
+from .players import Player, HumanPlayer, ComputerPlayer

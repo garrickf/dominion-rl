@@ -4,16 +4,19 @@ classes to manipulate that data.
 
 # Python stdlib
 from abc import ABC, abstractmethod
+from math import floor
 
 # From dominion module
+from dominion.cards.base_game import CURSE, DUCHY, ESTATE, GARDENS, PROVINCE
 from dominion.common import CardType, PlayerType
 from dominion.controller import Controller
+from dominion.policy import Policy
 
 from .deck import Deck
 
 
 class Player(ABC):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.deck = Deck()
         self.modifiers = {}
@@ -54,8 +57,29 @@ class Player(ABC):
 
     @abstractmethod
     def get_input(self, prompt, options, allow_skip=False):
-        """Each Player subclass must implement this method."""
+        """Each Player subclass must implement this method, which prompts
+        the player to take an action.
+        """
         pass
+
+    @abstractmethod
+    def show(self, text):
+        """Each Player subclass must implement this method, which shows the
+        player information on the moves they are able to make.
+        """
+        pass
+
+    def compute_score(self) -> int:
+        """Using the deck's card counts, calculate the number of victory points
+        the player has.
+        """
+        return (
+            self.deck.counts[ESTATE] * 1
+            + self.deck.counts[DUCHY] * 3
+            + self.deck.counts[PROVINCE] * 6
+            + self.deck.counts[CURSE] * -1
+            + self.deck.counts[GARDENS] * floor(len(self.deck) / 10)
+        )
 
 
 class HumanPlayer(Player):
@@ -75,13 +99,15 @@ class HumanPlayer(Player):
         print(text)
 
 
-# Need to subclass the ComputerPlayer with an appropriate learn method and policy
-# TODO: add game ctx to initialization
 class ComputerPlayer(Player):
-    def __init__(self, name):
+    def __init__(self, name: str, policy: Policy) -> None:
         super().__init__(name)
         self.type = PlayerType.COMPUTER
+        self.policy = policy
 
-    @abstractmethod
-    def reflect(self):
+    def get_input(self, _, options, allow_skip: bool = False):
+        # Consult the policy on what the action should be
+        return self.policy.get_input(options, allow_skip=allow_skip)
+
+    def show(self, _):
         pass
