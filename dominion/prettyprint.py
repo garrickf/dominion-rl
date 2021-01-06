@@ -56,7 +56,7 @@ def deck_to_str(deck):
 
 
 def options_to_str(options):
-    # TODO: allow card like formatting, or allow including descriptions from table/hand
+    # TODO: allow card like formatting, or allow including descriptions from supply/hand
     s = "Options:\n"
     for c, card_string in options.items():
         s += f"{c}. {card_string}\n"
@@ -70,10 +70,10 @@ def cards_to_str(cards, header="Cards"):
     return s
 
 
-def table_to_str(table, max_line_len=100):
-    s = "Table:\n"
+def supply_to_str(supply, max_line_len=100):
+    s = "Supply:\n"
     s += "{:<4}{:<16}{:<5}{:<7}{:<}\n".format("", "Name", "Left", "Cost", "Description")
-    for i, (card, left) in enumerate(table.items()):
+    for i, (card, left) in enumerate(supply.items()):
         line = "{:>2}. {!s:<24} [{:>2}] ({:>2}) | {}\n".format(
             i, card_to_str(card), left, card.cost, card.desc
         )

@@ -19,8 +19,8 @@ class PoacherEvent(Event):
     def forward(self, game_ctx, player):
         player.deck.draw_cards(n=1, replace_hand=False)
         num_empty_piles = 0
-        for card in game_ctx.table:
-            if game_ctx.table[card] == 0:
+        for card in game_ctx.supply:
+            if game_ctx.supply[card] == 0:
                 num_empty_piles += 1
 
         are_str = "is" if num_empty_piles == 1 else "are"

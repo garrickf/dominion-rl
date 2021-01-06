@@ -1,5 +1,9 @@
-# Intended usage: from dominion.cards.base_game import KINGDOM_CARDS, BASE_SET, etc.
+# Intended usage: from dominion.cards.base_game import KINGDOM_CARDS, SILVER, etc.
 
+# Python stdlib
+from typing import List, Tuple
+
+from ..card import Card
 from .artisan import ARTISAN
 from .bandit import BANDIT
 from .bureaucrat import BUREAUCRAT
@@ -35,7 +39,7 @@ from .witch import WITCH
 from .workshop import WORKSHOP
 
 # All possible kingdom cards
-KINGDOM_CARDS = [
+KINGDOM_CARDS: List[Card] = [
     ARTISAN,
     BANDIT,
     BUREAUCRAT,
@@ -65,4 +69,4 @@ KINGDOM_CARDS = [
 ]
 
 # Starting deck configuration
-STARTER_DECK = (ESTATE,) * 3 + (COPPER,) * 7
+STARTER_DECK: Tuple[Card, ...] = (ESTATE,) * 3 + (COPPER,) * 7

@@ -13,10 +13,10 @@ def get_trash_options(hand):
     return {idx: card.name for idx, card in enumerate(hand)}
 
 
-def get_buy_options(table, value):
+def get_buy_options(supply, value):
     options = {}
-    for idx, card in enumerate(table):
-        left = table[card]
+    for idx, card in enumerate(supply):
+        left = supply[card]
         if card.cost <= value and left > 0:
             options[idx] = card.name
     return options
@@ -42,7 +42,7 @@ class RemodelEvent(Event):
         new_value = to_trash.cost + 2
 
         player.deck.trash([to_trash])
-        options = get_buy_options(game_ctx.table, new_value)
+        options = get_buy_options(game_ctx.supply, new_value)
 
         player.show(options_to_str(options))
         prompt_str = f"Gain a card costing up to ({new_value})"
@@ -50,7 +50,7 @@ class RemodelEvent(Event):
         if c == "Skip":
             return
 
-        card = game_ctx.table.buy(c, player, free=True)
+        card = game_ctx.supply.buy(c, player, free=True)
         print("Player acquired {}\n".format(card_to_str(card)))
 
 

@@ -23,8 +23,8 @@ def get_treasures_as_options(cards):
 
 class BanditEventSelf(Event):
     def forward(self, game_ctx, player):
-        if game_ctx.table[GOLD] > 0:
-            game_ctx.table.buy(GOLD, player, free=True, to_pile=DeckPile.DISCARD)
+        if game_ctx.supply[GOLD] > 0:
+            game_ctx.supply.buy(GOLD, player, free=True, to_pile=DeckPile.DISCARD)
             print(f"Player acquired a {card_to_str(GOLD)}")
         else:
             player.show("There are no more Golds in the Supply.")

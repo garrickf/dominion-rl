@@ -30,11 +30,11 @@ def get_victory_card_options(hand):
 
 class BureaucratEventSelf(Event):
     def forward(self, game_ctx, player):
-        if game_ctx.table[SILVER] > 0:
-            game_ctx.table.buy(SILVER, player, free=True, to_pile=DeckPile.DRAW)
+        if game_ctx.supply[SILVER] > 0:
+            game_ctx.supply.buy(SILVER, player, free=True, to_pile=DeckPile.DRAW)
             print(f"Player acquired a {card_to_str(SILVER)}")
         else:
-            player.show("There are no more Silvers on the table.")
+            player.show("There are no more Silvers.")
 
 
 class BureaucratEventOther(Event):

@@ -9,12 +9,11 @@ import numpy as np
 
 # From dominion module
 import dominion.events as events
+from dominion.cards.base_game import PROVINCE
 from dominion.common import *
 from dominion.players import ComputerPlayer, HumanPlayer, Player
 from dominion.policy import RandomPolicy
-from dominion.cards.base_game import PROVINCE
-
-from .table import Table
+from dominion.supply import Supply
 
 
 # Game context stores order for players
@@ -31,7 +30,7 @@ class GameContext:
 
     def _setup(self) -> None:
         self.event_queue = []
-        self.table = Table(n_players=len(self.player_order))
+        self.supply = Supply(n_players=len(self.player_order))
         self.turn = 0
         self.setup = True
         # On GameContext creation, scramble player order and create setup events
@@ -76,10 +75,10 @@ class GameContext:
         - There are no more Provinces
         - 3 piles are empty (4 in a four player game)
         """
-        if self.table[PROVINCE] == 0:
+        if self.supply[PROVINCE] == 0:
             return True
 
-        n_piles_empty = len([v for v in self.table.values() if v == 0])
+        n_piles_empty = len([v for v in self.supply.values() if v == 0])
         if n_piles_empty >= 3:
             return True
 

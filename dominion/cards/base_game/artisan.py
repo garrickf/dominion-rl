@@ -8,11 +8,11 @@ from dominion.events import Event, clear_events_ahead_of_self
 from dominion.prettyprint import card_to_str, hand_to_str, options_to_str
 
 
-def get_buy_options(table):
+def get_buy_options(supply):
     value = 5
     options = {}
-    for idx, card in enumerate(table):
-        left = table[card]
+    for idx, card in enumerate(supply):
+        left = supply[card]
         if card.cost <= value and left > 0:
             options[idx] = card.name
     return options
@@ -25,7 +25,7 @@ def get_place_options(hand):
 
 class ArtisanEvent(Event):
     def forward(self, game_ctx, player):
-        options = get_buy_options(game_ctx.table)
+        options = get_buy_options(game_ctx.supply)
 
         if not options:
             player.show("No cards are available to get.\n")
@@ -39,7 +39,7 @@ class ArtisanEvent(Event):
         if c == "Skip":
             return
 
-        card = game_ctx.table.buy(c, player, free=True, to_pile=DeckPile.HAND)
+        card = game_ctx.supply.buy(c, player, free=True, to_pile=DeckPile.HAND)
         print("Player acquired {}\n".format(card_to_str(card)))
 
         player.show(hand_to_str(player.hand))

@@ -40,8 +40,8 @@ class WitchEventOther(Event):
                 return
 
         # Player gains a curse, if there are still curses
-        if game_ctx.table[CURSE] > 0:
-            game_ctx.table.buy(CURSE, player, free=True)
+        if game_ctx.supply[CURSE] > 0:
+            game_ctx.supply.buy(CURSE, player, free=True)
             print(f"Player gains a {card_to_str(CURSE)}")
         else:
             print("No curses left, phew!")  # TODO: refine

@@ -1,4 +1,4 @@
-""" The table represents the collection of cards available for purchase during
+""" The supply represents the collection of cards available for purchase during
 the game.
 """
 
@@ -60,8 +60,8 @@ class Supply:
         for card in kingdom:
             self.supply_piles[card] = 10
 
-    """ If the table is indexed, iterated over, or its items retrieved,
-    defer to the self.table object inside. Presents an abstraction wrapper
+    """ If the supply is indexed, iterated over, or its items retrieved,
+    defer to the self.supply_piles object inside. Presents an abstraction wrapper
     w/o subclassing.
     """
 

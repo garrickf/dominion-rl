@@ -1,16 +1,18 @@
 """ The Event class and its subclasses dictate the flow of the game. They are
 invoked by a running Game instance and entrusted with the necessary player and game
 context information to handle anything from prompting players, to managing card
-purchases off the table, and more.
+purchases off the supply, and more.
 """
 
+# Python stdlib
 from abc import ABC, abstractmethod
 
+# From dominion module
 from dominion.prettyprint import (
     card_to_str,
     filter_treasures_as_str,
     hand_to_str,
-    table_to_str,
+    supply_to_str,
 )
 
 from .common import CardType, DeckPile
@@ -51,10 +53,10 @@ def get_playable_actions_as_options(cards):
     return options
 
 
-def get_purchasable_cards_as_options(table, player):
+def get_purchasable_cards_as_options(supply, player):
     options = {}
-    for idx, card in enumerate(table):
-        left = table[card]
+    for idx, card in enumerate(supply):
+        left = supply[card]
         if card.cost <= player.treasure and left > 0:
             options[idx] = card.name
     return options
@@ -70,7 +72,7 @@ def get_all_as_options(cards):
 
 class Event(ABC):
     def __init__(self, target):
-        """ TODO: docstring
+        """TODO: docstring
 
         Args:
             target (str): The string name of the player the event acts on. TODO: allow/
@@ -162,8 +164,8 @@ class BuyEvent(Event):
         """
         player.show(get_treasures_msg(player))
 
-        player.show(table_to_str(game_ctx.table))
-        options = get_purchasable_cards_as_options(game_ctx.table, player)
+        player.show(supply_to_str(game_ctx.supply))
+        options = get_purchasable_cards_as_options(game_ctx.supply, player)
         if not options:
             player.show("Cannot afford anything this turn.\n")
             # If there are any other BuyEvents, clear them
@@ -171,15 +173,13 @@ class BuyEvent(Event):
             return
 
         n = get_num_events(game_ctx, self)
-        prompt_str = "Buy a card on the table ({} buy{} left)".format(
-            n, "s" if n != 1 else ""
-        )
+        prompt_str = "Buy a card ({} buy{} left)".format(n, "s" if n != 1 else "")
         c = player.get_input(prompt_str, options, allow_skip=True)
 
         if c == "Skip":
             return
 
-        card = game_ctx.table.buy(c, player)
+        card = game_ctx.supply.buy(c, player)
         print("Player bought {}\n".format(card_to_str(card)))
 
 

@@ -16,11 +16,11 @@ def get_treasures_as_options(cards):
     return options
 
 
-def get_eligible_treasures_as_options(table, value):
+def get_eligible_treasures_as_options(supply, value):
     """Takes a list of cards and returns a dict from index to string option"""
     options = {}
-    for idx, card in enumerate(table):
-        left = table[card]
+    for idx, card in enumerate(supply):
+        left = supply[card]
         if card.kind == CardType.TREASURE and card.cost <= value and left > 0:
             options[idx] = card.name
     return options
@@ -50,7 +50,7 @@ class MineEvent(Event):
         new_value = to_trash.cost + 3
         # TODO: test
         player.deck.trash([to_trash])
-        options = get_eligible_treasures_as_options(game_ctx.table, new_value)
+        options = get_eligible_treasures_as_options(game_ctx.supply, new_value)
 
         player.show(options_to_str(options))
         prompt_str = f"Gain a treasure to costing up to ({new_value})"
@@ -58,7 +58,7 @@ class MineEvent(Event):
         if c == "Skip":
             return
 
-        card = game_ctx.table.buy(c, player, free=True)
+        card = game_ctx.supply.buy(c, player, free=True)
         print("Player acquired {}\n".format(card_to_str(card)))
 
 
