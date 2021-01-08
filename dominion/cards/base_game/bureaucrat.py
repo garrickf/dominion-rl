@@ -3,11 +3,12 @@ Victory card from their hand and puts it onto their deck (or reveals a hand with
 no Victory cards).
 """
 
-from dominion.cards import ActionCard
+# From dominion module
+import dominion.util.logging as logging
+from dominion.cards import ActionAttackCard
 from dominion.common import CardType, DeckPile, QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import card_to_str, hand_to_str
-import dominion.util.logging as logging
+from dominion.util.prettyprint import card_to_str, hand_to_str
 
 from .moat import MOAT
 from .silver import SILVER
@@ -17,7 +18,7 @@ def get_reaction_options(hand):
     options = {}
     for idx, card in enumerate(hand):
         if card == MOAT:
-            options[idx] = card
+            options[idx] = card.name
     return options
 
 
@@ -86,7 +87,7 @@ class BureaucratEventOther(Event):
 
 
 # TODO: action/attack card
-class Bureaucrat(ActionCard):
+class Bureaucrat(ActionAttackCard):
     def __init__(self):
         super().__init__(
             name="Bureaucrat",

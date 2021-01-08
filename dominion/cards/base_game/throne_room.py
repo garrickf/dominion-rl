@@ -4,19 +4,16 @@
 # From dominion module
 import dominion.util.logging as logging
 from dominion.cards import ActionCard
-from dominion.common import CardType, DeckPile, QueuePosition
+from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
-from dominion.prettyprint import card_to_str, hand_to_str
+from dominion.util.cardfuncs import is_action_card
+from dominion.util.prettyprint import card_to_str, hand_to_str
 
 
 def get_actions_as_options(hand):
     options = {}
     for idx, card in enumerate(hand):
-        if card.kind in [
-            CardType.ACTION,
-            CardType.ACTION_ATTACK,
-            CardType.ACTION_REACTION,
-        ]:
+        if is_action_card(card):
             options[idx] = card.name
 
     return options

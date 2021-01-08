@@ -1,6 +1,3 @@
-""" Pretty printing functions TODO: docstring
-"""
-
 from collections import defaultdict
 from colorama import Fore, Back, Style
 from dominion.common import CardType
@@ -16,6 +13,8 @@ TREASURE_TO_COLOR = {
 CARDTYPE_TO_COLOR = {
     CardType.VICTORY: Fore.GREEN,
     CardType.ACTION: Fore.CYAN,
+    CardType.ACTION_ATTACK: Fore.CYAN,
+    CardType.ACTION_REACTION: Fore.CYAN,
     CardType.CURSE: Fore.BLUE,
 }
 

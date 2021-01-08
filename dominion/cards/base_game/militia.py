@@ -3,10 +3,15 @@
 
 # From dominion module
 import dominion.util.logging as logging
-from dominion.cards import ActionCard
+from dominion.cards import ActionAttackCard
 from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import card_to_str, cards_to_str, hand_to_str, options_to_str
+from dominion.util.prettyprint import (
+    card_to_str,
+    cards_to_str,
+    hand_to_str,
+    options_to_str,
+)
 
 from .moat import MOAT
 
@@ -15,7 +20,7 @@ def get_reaction_options(hand):
     options = {}
     for idx, card in enumerate(hand):
         if card == MOAT:
-            options[idx] = card
+            options[idx] = card.name
     return options
 
 
@@ -74,7 +79,7 @@ class MilitiaEventOther(Event):
         )
 
 
-class Militia(ActionCard):
+class Militia(ActionAttackCard):
     def __init__(self):
         super().__init__(
             name="Militia",

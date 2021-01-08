@@ -4,21 +4,17 @@ choose to; set those aside, discarding them afterwards.
 
 # From dominion module
 from dominion.cards import ActionCard
-from dominion.common import CardType, DeckPile, QueuePosition
+from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import hand_to_str, options_to_str
+from dominion.util.cardfuncs import is_action_card
+from dominion.util.prettyprint import hand_to_str, options_to_str
 
 
 class LibraryEvent(Event):
     def forward(self, game_ctx, player):
         while len(player.hand) < 7:
             next_card = player.deck.draw_cards(n=1, to_caller=True)[0]
-            # TODO: make isAction helper function
-            if next_card.kind in [
-                CardType.ACTION,
-                CardType.ACTION_ATTACK,
-                CardType.ACTION_REACTION,
-            ]:
+            if is_action_card(next_card):
                 options = {1: next_card.name}
                 player.show(options_to_str(options))
                 prompt_str = "You may add this card to your hand"

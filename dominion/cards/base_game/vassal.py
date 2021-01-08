@@ -5,9 +5,10 @@ play it.
 # From dominion module
 import dominion.util.logging as logging
 from dominion.cards import ActionCard
-from dominion.common import CardType, DeckPile, QueuePosition
+from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import card_to_str, options_to_str
+from dominion.util.cardfuncs import is_action_card
+from dominion.util.prettyprint import card_to_str, options_to_str
 
 
 class VassalEvent(Event):
@@ -15,11 +16,7 @@ class VassalEvent(Event):
         player.set_modifier("extra_treasure", lambda v: v + 2)
 
         top_card = player.deck.draw_cards(n=1, to_caller=True)[0]
-        if top_card.kind in [
-            CardType.ACTION,
-            CardType.ACTION,
-            CardType.ACTION_REACTION,
-        ]:
+        if is_action_card(top_card):
             options = {1: top_card.name}
             player.show(options_to_str(options))
             prompt_str = "You may play the action"

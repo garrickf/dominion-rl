@@ -2,7 +2,10 @@
 all cards and presents a unified interface for working with them.
 """
 
+# Python stdlib
 from abc import ABC, abstractmethod
+
+# From dominion module
 from dominion.common import CardType
 
 
@@ -53,8 +56,8 @@ class VictoryCard(Card):
 
 
 class ActionCard(Card):
-    def __init__(self, *, name, cost, desc=""):
-        super().__init__(name=name, kind=CardType.ACTION, cost=cost, desc=desc)
+    def __init__(self, *, name, cost, desc="", kind=CardType.ACTION):
+        super().__init__(name=name, kind=kind, cost=cost, desc=desc)
 
     @abstractmethod
     def play(self, game_ctx, player):
@@ -66,3 +69,13 @@ class ActionCard(Card):
             game_ctx.add_events(events, where=QueuePosition.FRONT)
         """
         pass
+
+
+class ActionAttackCard(ActionCard):
+    def __init__(self, *, name, cost, desc=""):
+        super().__init__(name=name, kind=CardType.ACTION_ATTACK, cost=cost, desc=desc)
+
+
+class ActionReactionCard(ActionCard):
+    def __init__(self, *, name, cost, desc=""):
+        super().__init__(name=name, kind=CardType.ACTION_REACTION, cost=cost, desc=desc)

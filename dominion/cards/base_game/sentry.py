@@ -5,7 +5,7 @@ and/or discard any number of them. Put the rest back on top in any order.
 from dominion.cards import ActionCard
 from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event, PlayActionEvent
-from dominion.prettyprint import cards_to_str
+from dominion.util.prettyprint import cards_to_str
 
 
 def get_options(cards, already_chosen):

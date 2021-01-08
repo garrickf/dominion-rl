@@ -4,10 +4,11 @@ reveal this from your hand, to be unaffected by it.
 # TODO: create an action - reaction type card
 """
 
-from dominion.cards import ActionCard
+# From dominion module
+from dominion.cards import ActionReactionCard
 from dominion.common import QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import hand_to_str
+from dominion.util.prettyprint import hand_to_str
 
 
 class MoatEvent(Event):
@@ -16,7 +17,7 @@ class MoatEvent(Event):
         player.show(hand_to_str(player.hand))
 
 
-class Moat(ActionCard):
+class Moat(ActionReactionCard):
     def __init__(self):
         super().__init__(
             name="Moat",

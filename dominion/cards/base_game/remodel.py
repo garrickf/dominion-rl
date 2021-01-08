@@ -1,4 +1,4 @@
-""" Remodel: Trash a card from your hand. Gain a card costing up to (2) more 
+"""Remodel: Trash a card from your hand. Gain a card costing up to (2) more 
 than it.
 """
 
@@ -7,7 +7,7 @@ import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
-from dominion.prettyprint import card_to_str, hand_to_str, options_to_str
+from dominion.util.prettyprint import card_to_str, hand_to_str, options_to_str
 
 
 def get_trash_options(hand):

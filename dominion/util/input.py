@@ -1,4 +1,4 @@
-""" Supercedes some of the functions in util TODO: docstring
+"""Functions dealing with getting input from human players.
 """
 
 import sys

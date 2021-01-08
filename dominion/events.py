@@ -9,14 +9,15 @@ from abc import ABC, abstractmethod
 
 # From dominion module
 import dominion.util.logging as logging
-from dominion.prettyprint import (
+from dominion.util.cardfuncs import is_action_card
+from dominion.util.prettyprint import (
     card_to_str,
     filter_treasures_as_str,
     hand_to_str,
     supply_to_str,
 )
 
-from .common import CardType, DeckPile
+from .common import DeckPile
 
 """ Helper functions that edit the game context
 """
@@ -49,7 +50,7 @@ def get_playable_actions_as_options(cards):
     """Takes a list of cards and returns a dict from index to string option"""
     options = {}
     for idx, card in enumerate(cards):
-        if card.kind == CardType.ACTION:
+        if is_action_card(card):
             options[idx] = card.name
     return options
 

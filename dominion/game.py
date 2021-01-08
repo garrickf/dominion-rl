@@ -32,6 +32,7 @@ class GameContext:
     def _setup(self) -> None:
         self.event_queue = []
         self.supply = Supply(n_players=len(self.player_order))
+        # self.supply = Supply(n_players=len(self.player_order), debug=True)
         self.turn = 0
         self.setup = True
         # On GameContext creation, scramble player order and create setup events
@@ -103,7 +104,7 @@ class Game:
 
         # Initialize players
         players = []
-        player_types = [PlayerType.COMPUTER, PlayerType.COMPUTER]
+        player_types = [PlayerType.HUMAN, PlayerType.COMPUTER]
         for idx, player_type in enumerate(player_types):
             if player_type == PlayerType.HUMAN:
                 player_name = f"Player {idx + 1}"
@@ -138,7 +139,7 @@ class Game:
 
         logging.log(
             [logging.GAME, logging.OBSERVER],
-            f"Game ended after {self.ctx.turn + 1} turns",
+            f"Game ended after {self.ctx.turn + 1} turns.",
         )
 
         scores = [player.compute_score() for player in self.ctx.player_order]

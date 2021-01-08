@@ -6,7 +6,7 @@ import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import card_to_str, options_to_str
+from dominion.util.prettyprint import card_to_str, options_to_str
 
 
 def get_buy_options(supply):

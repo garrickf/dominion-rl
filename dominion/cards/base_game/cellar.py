@@ -5,7 +5,7 @@
 from dominion.cards import ActionCard
 from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import hand_to_str
+from dominion.util.prettyprint import hand_to_str
 
 
 # TODO: create helper already selected function

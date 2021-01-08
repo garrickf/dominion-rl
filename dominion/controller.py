@@ -5,8 +5,7 @@ input during a game. They are analogous to a Policy.
 import numpy as np
 
 # From dominion module
-from input_util import get_line
-# TODO: change to from .util.input import [...]
+from dominion.util.input import get_line
 
 
 def levenshtein_dist(w1, w2):
@@ -51,7 +50,7 @@ def fuzzy_text_match(text, options):
 
 def validator_from_options(options, allow_skip):
     """Creates validator that takes in Input object, cleans, and validates it.
-    See input_util.py for more on how the validator object is used.
+    See dominion.util.input for more on how the validator object is used.
     """
 
     def is_valid_func(user_input):

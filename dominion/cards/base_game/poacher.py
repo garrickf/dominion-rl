@@ -5,7 +5,7 @@
 from dominion.cards import ActionCard
 from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event, PlayActionEvent
-from dominion.prettyprint import hand_to_str, options_to_str
+from dominion.util.prettyprint import hand_to_str, options_to_str
 
 
 def get_options(cards, already_chosen):

@@ -6,7 +6,7 @@ card from it onto your deck.
 from dominion.cards import ActionCard
 from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event, PlayActionEvent
-from dominion.prettyprint import cards_to_str
+from dominion.util.prettyprint import cards_to_str
 
 
 class HarbingerEvent(Event):
