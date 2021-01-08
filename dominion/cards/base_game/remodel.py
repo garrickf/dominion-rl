@@ -2,6 +2,8 @@
 than it.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
@@ -51,7 +53,10 @@ class RemodelEvent(Event):
             return
 
         card = game_ctx.supply.buy(c, player, free=True)
-        print("Player acquired {}\n".format(card_to_str(card)))
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} trashed {card_to_str(to_trash)} and acquired {card_to_str(card)}.",
+        )
 
 
 class Remodel(ActionCard):

@@ -1,10 +1,12 @@
 """Militia: +(2). Each other player discards down to three cards in hand.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import DeckPile, QueuePosition
-from dominion.events import Event, clear_events_ahead_of_self
-from dominion.prettyprint import card_to_str, hand_to_str, options_to_str
+from dominion.events import Event
+from dominion.prettyprint import card_to_str, cards_to_str, hand_to_str, options_to_str
 
 from .moat import MOAT
 
@@ -41,7 +43,10 @@ class MilitiaEventOther(Event):
             c = player.get_input(prompt_str, options, allow_skip=True)
             if c is not "Skip":
                 card = player.hand[c]
-                print(f"Player reveals a {card_to_str(card)}, defending themselves!")
+                logging.log(
+                    [logging.GAME, logging.OBSERVER],
+                    f"{player.name} reveals a {card_to_str(card)}, defending themselves!",
+                )
                 return
 
         # Discard down to three cards in hand
@@ -59,8 +64,13 @@ class MilitiaEventOther(Event):
         player.deck.move(to_discard, from_pile=DeckPile.HAND, to_pile=DeckPile.DISCARD)
 
         player.show(hand_to_str(player.hand))
-        print(
-            f"Player discarded {len(to_discard)} card{'' if len(to_discard) == 1 else 's'}"
+        logging.log(
+            logging.OBSERVER,
+            f"{player.name} discarded {len(to_discard)} card{'' if len(to_discard) == 1 else 's'}",
+        )
+        logging.log(
+            logging.GAME,
+            f"{player.name} discarded {len(to_discard)} card{'' if len(to_discard) == 1 else 's'}: {cards_to_str(to_discard)}",
         )
 
 

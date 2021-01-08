@@ -1,6 +1,8 @@
 """ Moneylender: You may trash a Copper from your hand for (+3).
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
@@ -35,7 +37,10 @@ class MoneylenderEvent(Event):
         player.deck.trash([to_trash])
         player.set_modifier("extra_treasure", lambda v: v + 3)
 
-        print(f"Player got (+3)")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} trashed a Copper to get (+3)",
+        )
 
 
 class Moneylender(ActionCard):

@@ -1,6 +1,9 @@
-""" Mine TODO: docstring
+""" Mine: You may trash a treasure from your hand. Gain a treasure to your hand 
+costing up to (3) more than it.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import CardType, DeckPile, QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
@@ -48,7 +51,6 @@ class MineEvent(Event):
 
         to_trash = player.hand[c]
         new_value = to_trash.cost + 3
-        # TODO: test
         player.deck.trash([to_trash])
         options = get_eligible_treasures_as_options(game_ctx.supply, new_value)
 
@@ -59,7 +61,10 @@ class MineEvent(Event):
             return
 
         card = game_ctx.supply.buy(c, player, free=True)
-        print("Player acquired {}\n".format(card_to_str(card)))
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} trashed {card_to_str(to_trash)} and acquired a {card_to_str(card)}.",
+        )
 
 
 class Mine(ActionCard):

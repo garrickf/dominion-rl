@@ -1,8 +1,11 @@
 """Workshop: Gain a card costing up to (4).
 """
+
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import QueuePosition
-from dominion.events import Event, clear_events_ahead_of_self
+from dominion.events import Event
 from dominion.prettyprint import card_to_str, options_to_str
 
 
@@ -27,7 +30,10 @@ class WorkshopEvent(Event):
             return
 
         card = game_ctx.supply.buy(c, player, free=True)
-        print(f"Player acquired {card_to_str(card)}\n")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} acquired {card_to_str(card)}.",
+        )
 
 
 class Workshop(ActionCard):

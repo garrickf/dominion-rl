@@ -1,6 +1,8 @@
-""" Witch TODO: docstring
+""" Witch: +2 cards. Each other player gains a Curse.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import QueuePosition
 from dominion.events import Event
@@ -36,15 +38,24 @@ class WitchEventOther(Event):
             c = player.get_input(prompt_str, options, allow_skip=True)
             if c is not "Skip":
                 card = player.hand[c]
-                print(f"Player reveals a {card_to_str(card)}, defending themselves!")
+                logging.log(
+                    [logging.GAME, logging.OBSERVER],
+                    f"{player.name} reveals a {card_to_str(card)}, defending themselves!",
+                )
                 return
 
         # Player gains a curse, if there are still curses
         if game_ctx.supply[CURSE] > 0:
             game_ctx.supply.buy(CURSE, player, free=True)
-            print(f"Player gains a {card_to_str(CURSE)}")
+            logging.log(
+                [logging.GAME, logging.OBSERVER],
+                f"{player.name} gains a {card_to_str(CURSE)}",
+            )
         else:
-            print("No curses left, phew!")  # TODO: refine
+            logging.log(
+                [logging.GAME, logging.OBSERVER],
+                f"{player.name} does not gain a {card_to_str(CURSE)}, as there are no more in the Supply. Phew!",
+            )
 
 
 # TODO: action/attack card

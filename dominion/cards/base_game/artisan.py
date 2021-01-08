@@ -2,6 +2,8 @@
 your hand onto your deck.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import DeckPile, QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
@@ -40,7 +42,10 @@ class ArtisanEvent(Event):
             return
 
         card = game_ctx.supply.buy(c, player, free=True, to_pile=DeckPile.HAND)
-        print("Player acquired {}\n".format(card_to_str(card)))
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} acquired {card_to_str(card)}",
+        )
 
         player.show(hand_to_str(player.hand))
         options = get_place_options(player.hand)
@@ -50,7 +55,15 @@ class ArtisanEvent(Event):
         card = player.hand[c]
         player.deck.move([card], from_pile=DeckPile.HAND, to_pile=DeckPile.DRAW)
 
-        print("Player moved a card from their hand to their deck")
+        logging.log(
+            logging.OBSERVER,
+            f"{player.name} moved a card from their hand to their deck",
+        )
+
+        logging.log(
+            logging.GAME,
+            f"{player.name} moved {card_to_str(card)} from their hand to their deck",
+        )
 
 
 class Artisan(ActionCard):

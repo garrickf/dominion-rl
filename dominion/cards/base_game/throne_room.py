@@ -1,10 +1,12 @@
 """Throne Room: You may play an action card from your hand twice.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import CardType, DeckPile, QueuePosition
 from dominion.events import Event, clear_events_ahead_of_self
-from dominion.prettyprint import card_to_str, hand_to_str, options_to_str
+from dominion.prettyprint import card_to_str, hand_to_str
 
 
 def get_actions_as_options(hand):
@@ -43,7 +45,10 @@ class ThroneRoomEvent(Event):
             [action_card], from_pile=DeckPile.HAND, to_pile=DeckPile.PLAYED
         )
 
-        print(f"Player plays {card_to_str(action_card)} twice")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} plays {card_to_str(action_card)} twice.",
+        )
 
 
 class ThroneRoom(ActionCard):

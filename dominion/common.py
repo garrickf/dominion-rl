@@ -31,3 +31,8 @@ class DeckPile(Enum):
 class PlayerType(Enum):
     HUMAN = auto()
     COMPUTER = auto()
+
+
+class LogTarget(Enum):
+    OBSERVER = auto()
+    GAME = auto()

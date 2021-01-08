@@ -9,6 +9,7 @@ import numpy as np
 
 # From dominion module
 import dominion.events as events
+import dominion.util.logging as logging
 from dominion.cards.base_game import PROVINCE
 from dominion.common import *
 from dominion.players import ComputerPlayer, HumanPlayer, Player
@@ -79,13 +80,15 @@ class GameContext:
             return True
 
         n_piles_empty = len([v for v in self.supply.values() if v == 0])
-        if n_piles_empty >= 3:
+        if n_piles_empty >= 3 and len(self.player_order) < 4:
+            return True
+        if n_piles_empty >= 4:
             return True
 
         return False
 
     def get_raw_state(self):
-        """Returns the raw state of the game: whose turn it is, what cards are 
+        """Returns the raw state of the game: whose turn it is, what cards are
         in the supply, etc.
         """
         return {"state": []}
@@ -107,9 +110,7 @@ class Game:
                 player = HumanPlayer(player_name)
             else:  # Computer
                 player_name = f"Player {idx + 1} (CPU)"
-                player = ComputerPlayer(
-                    player_name, RandomPolicy()
-                )
+                player = ComputerPlayer(player_name, RandomPolicy())
                 # player = ComputerPlayer(
                 #     player_name, QLearningPolicy(raw_state_cb=self.ctx.get_raw_state)
                 # )
@@ -121,11 +122,13 @@ class Game:
         self.ctx.set_players(players)
 
     def play(self) -> Tuple[int, Sequence[int]]:
-        # While game not finished
-        # Get next event from queue
-        # Run event forward with game context, relevant player
         if not self.ctx.setup:
             raise RuntimeError("game context not set up")
+
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"Starting game of Dominion!",
+        )
 
         while not self.ctx.reached_end():
             event = self.ctx.get_next_event()
@@ -133,12 +136,18 @@ class Game:
             player = self.name_to_player[event.target]
             event(self.ctx, player)
 
-        print(f"Game ended after {self.ctx.turn + 1} turns")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"Game ended after {self.ctx.turn + 1} turns",
+        )
 
         scores = [player.compute_score() for player in self.ctx.player_order]
         idx = np.argmax(scores)
         winner_name = self.ctx.player_order[idx].name
         winner_score = scores[idx]
-        print(f"{winner_name} won with a score of {winner_score} points!")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{winner_name} won with a score of {winner_score} points!",
+        )
 
         return (idx, scores)

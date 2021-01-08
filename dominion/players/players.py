@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from math import floor
 
 # From dominion module
+import dominion.util.logging as logging
 from dominion.cards.base_game import CURSE, DUCHY, ESTATE, GARDENS, PROVINCE
 from dominion.common import CardType, PlayerType
 from dominion.controller import Controller
@@ -96,7 +97,7 @@ class HumanPlayer(Player):
 
     def show(self, text):
         # TODO: incorporate with logging: to player, and to display, but not to game
-        print(text)
+        logging.log(self.name, text)
 
 
 class ComputerPlayer(Player):
@@ -109,5 +110,5 @@ class ComputerPlayer(Player):
         # Consult the policy on what the action should be
         return self.policy.get_input(options, allow_skip=allow_skip)
 
-    def show(self, _):
-        pass
+    def show(self, text):
+        logging.log(self.name, text)

@@ -8,6 +8,7 @@ purchases off the supply, and more.
 from abc import ABC, abstractmethod
 
 # From dominion module
+import dominion.util.logging as logging
 from dominion.prettyprint import (
     card_to_str,
     filter_treasures_as_str,
@@ -136,8 +137,10 @@ class PlayActionEvent(Event):
             [action_card], from_pile=DeckPile.HAND, to_pile=DeckPile.PLAYED
         )
 
-        # TODO: Transfer to logging
-        print("Player played {}\n".format(card_to_str(action_card)))
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} played {card_to_str(action_card)}.",
+        )
 
 
 def get_treasures_msg(player):
@@ -180,7 +183,10 @@ class BuyEvent(Event):
             return
 
         card = game_ctx.supply.buy(c, player)
-        print("Player bought {}\n".format(card_to_str(card)))
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} bought {card_to_str(card)}.",
+        )
 
 
 # TODO: add played cards back to discard pile
@@ -199,7 +205,11 @@ class CleanupEvent(Event):
         """
         player.cleanup()  # Clear spent, any status effects
         player.deck.draw_cards(n=5, replace_hand=True)
-        player.show("Drawing 5 cards and ending turn.\n")
+        player.show("Drawing 5 cards and ending turn.")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} draws 5 cards and ends their turn.\n---",
+        )
 
 
 class SetupEvent(Event):
@@ -214,7 +224,9 @@ class SetupEvent(Event):
         Returns:
             None
         """
-        # TODO: Separate game log info with data shown to player. Log accordingly.
-        print("Drawing 5 cards.")
+        logging.log(
+            [logging.GAME, logging.OBSERVER],
+            f"{player.name} draws 5 cards.\n---",
+        )
         player.deck.draw_cards(n=5, replace_hand=True)
         pass

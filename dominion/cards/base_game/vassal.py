@@ -2,10 +2,12 @@
 play it.
 """
 
+# From dominion module
+import dominion.util.logging as logging
 from dominion.cards import ActionCard
 from dominion.common import CardType, DeckPile, QueuePosition
 from dominion.events import Event
-from dominion.prettyprint import card_to_str, hand_to_str, options_to_str
+from dominion.prettyprint import card_to_str, options_to_str
 
 
 class VassalEvent(Event):
@@ -25,11 +27,23 @@ class VassalEvent(Event):
             if c == "Skip":
                 return
 
+            logging.log(
+                [logging.OBSERVER, logging.GAME],
+                f"{player.name} plays the top card of their deck, {card_to_str(top_card)}.",
+            )
             top_card.play(game_ctx, player)
 
         # TODO: test more thoroughly
         player.deck.add([top_card], to_pile=DeckPile.DISCARD)
-        print("Player discards the top card of their deck.")
+        logging.log(
+            logging.OBSERVER,
+            f"{player.name} discards the top card of their deck.",
+        )
+
+        logging.log(
+            logging.GAME,
+            f"{player.name} discards the top card of their deck, {card_to_str(top_card)}.",
+        )
 
 
 class Vassal(ActionCard):
