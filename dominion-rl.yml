@@ -1,0 +1,12 @@
+name: dominion-rl
+channels:
+  - conda-forge
+dependencies:
+  - pytorch
+  - tensorflow=2.0
+  - numpy
+  - colorama
+  - yapf
+  - pytest
+  - pylint
+  - black
